@@ -35,7 +35,8 @@
   }
   .head-row{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
   .brand{display:flex; align-items:baseline; gap:8px}
-  .brand h1{font-size:18px; font-weight:800; letter-spacing:-.02em; margin:0}
+  .brand .logo{font-size:21px; font-weight:800; letter-spacing:-.04em; margin:0; color:var(--ink); line-height:1}
+  .brand .logo .o{color:var(--accent)}
   .brand .by{font-size:11px; color:var(--muted); font-weight:600; letter-spacing:.02em}
   .count{font-size:13px; color:var(--muted); font-weight:600}
   .count b{color:var(--accent); font-weight:800}
@@ -91,8 +92,10 @@
   .tag.t-deal.전세{background:var(--jeonse-bg); color:var(--jeonse)}
   .tag.t-deal.월세{background:var(--wolse-bg); color:var(--wolse)}
   .id{margin-left:auto; font-size:12px; font-weight:700; color:#aab0ba}
-  .own{font-size:11px; font-weight:700; color:var(--muted); border:1px solid var(--line);
-    padding:2px 7px; border-radius:6px}
+  .own{font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; border:1px solid transparent}
+  .own.own-self{background:var(--ink); color:#fff; border-color:var(--ink)}
+  .own.own-joint{background:var(--accent); color:#fff; border-color:var(--accent)}
+  .own.own-other{background:#fff; color:var(--muted); border-color:var(--line)}
 
   .bldg{font-size:16.5px; font-weight:800; letter-spacing:-.02em; line-height:1.3; margin:0 0 3px;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
@@ -165,8 +168,8 @@
 <header>
   <div class="head-row">
     <div class="brand">
-      <h1 id="appTitle">매물 필터뷰</h1>
-      <span class="by" id="appBy">eXp · KJH</span>
+      <span class="logo">the<span class="o">o</span></span>
+      <span class="by" id="appBy">매물 필터뷰</span>
     </div>
     <div class="count"><b id="cnt">0</b>건</div>
   </div>
@@ -303,6 +306,35 @@ function priceLine(d){
 function unitTxt(u){ return (u==null||u==="-") ? "-" : Math.round(u).toLocaleString()+"원"; }
 const num = v => (v===""||v==null)?null:(isNaN(+v)?null:+v);
 
+/* ---- 매물종류 색상 (상업=블루계열 / 주거=그린계열 / 토지·특수=앰버·퍼플계열) ---- */
+const TYPE_COLOR = {
+  // 상업
+  "상가":         ["#E8EEFF","#2746E6"],
+  "사무실":       ["#E9EAFB","#3D43C4"],
+  "지식산업센터": ["#E5F0FA","#1E6FB8"],
+  "건물":         ["#ECEAF8","#5B3FB5"],
+  // 주거
+  "아파트":       ["#E4F5EA","#1F7A4D"],
+  "오피스텔":     ["#E2F4F0","#0E8C7A"],
+  "주택빌라":     ["#EBF4E0","#4F7A1F"],
+  "원투룸":       ["#E1F3F7","#11789B"],
+  // 토지·특수
+  "공장창고":     ["#F2EDE4","#876730"],
+  "토지":         ["#FBF1DD","#9A6B14"],
+  "재건축재개발": ["#F6E9E2","#B05A2E"],
+  "재개발":       ["#F6E9E2","#B05A2E"],
+  "분양":         ["#F6E7F1","#A23B86"]
+};
+function typeStyle(t){
+  const c = TYPE_COLOR[t];
+  return c ? `background:${c[0]};color:${c[1]}` : "background:#F0F1F4;color:#3B414C";
+}
+function ownClass(o){
+  if(o==="자기매물") return "own-self";
+  if(o==="공동중개") return "own-joint";
+  return "own-other";   // 타부동산 등
+}
+
 /* ---- 필터 적용 ---- */
 function filtered(){
   let r = DATA.filter(d=>{
@@ -354,9 +386,9 @@ function render(){
   list.innerHTML = r.map(d=>`
     <div class="card">
       <div class="card-top">
-        <span class="tag t-type">${d.type}</span>
+        <span class="tag t-type" style="${typeStyle(d.type)}">${d.type}</span>
         <span class="tag t-deal ${d.deal}">${d.deal}</span>
-        ${isClient ? '' : `<span class="own">${d.own}</span><span class="id">${d.id}</span>`}
+        ${isClient ? '' : `<span class="own ${ownClass(d.own)}">${d.own}</span><span class="id">${d.id}</span>`}
       </div>
       <div class="bldg">${d.bldg}</div>
       <div class="addr">${d.addr}</div>
@@ -462,8 +494,7 @@ sortmenu.addEventListener("click",e=>{
 
 function applyMode(){
   const isClient = CONFIG.MODE==="client";
-  document.getElementById("appTitle").textContent = CONFIG.TITLE || (isClient ? "추천 매물" : "매물 필터뷰");
-  document.getElementById("appBy").textContent = isClient ? "eXp 김정혁 공인중개사" : "eXp · KJH";
+  document.getElementById("appBy").textContent = CONFIG.TITLE || (isClient ? "추천 매물 · eXp" : "매물 필터뷰 · eXp");
 }
 function loadLive(base){
   // Apps Script 웹앱은 CORS 이슈가 있어 JSONP(script 태그)로 읽음
