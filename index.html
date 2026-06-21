@@ -321,6 +321,7 @@ function priceLine(d){
   return s;
 }
 function unitTxt(u){ return (u==null||u==="-") ? "-" : Math.round(u).toLocaleString()+"원"; }
+function fnum(v,dec){ if(v==null||v==="-"||v===""||isNaN(+v)) return v; return (+(+v).toFixed(dec)).toLocaleString(); }
 function extrasLine(d){
   const bits=[];
   const ok=v=>(v!=null && v!=="" && v!=="-" && Number(v)>0);
@@ -424,8 +425,8 @@ function render(){
       <div class="price tnum">${priceLine(d)}</div>
       ${extrasLine(d)}
       <div class="meta">
-        <div class="m"><div class="k">실측면적</div><div class="v tnum">${d.pyeong}평</div></div>
-        <div class="m"><div class="k">전용 ㎡</div><div class="v tnum">${d.m2}㎡</div></div>
+        <div class="m"><div class="k">실측면적</div><div class="v tnum">${fnum(d.pyeong,1)}평</div></div>
+        <div class="m"><div class="k">전용 ㎡</div><div class="v tnum">${fnum(d.m2,1)}㎡</div></div>
         <div class="m"><div class="k">평단가</div><div class="v tnum">${unitTxt(d.unit)}</div></div>
       </div>
     </div>`).join("");
