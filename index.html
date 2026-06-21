@@ -324,9 +324,14 @@ function unitTxt(u){ return (u==null||u==="-") ? "-" : Math.round(u).toLocaleStr
 function fnum(v,dec){ if(v==null||v==="-"||v===""||isNaN(+v)) return v; return (+(+v).toFixed(dec)).toLocaleString(); }
 function extrasLine(d){
   const bits=[];
-  const ok=v=>(v!=null && v!=="" && v!=="-" && Number(v)>0);
-  if(ok(d.premium)) bits.push(`<span class="ex"><span class="ek">권리금</span>${won(d.premium)}</span>`);
-  if(ok(d.mgmt))    bits.push(`<span class="ex"><span class="ek">관리비</span>${won(d.mgmt)}</span>`);
+  const isNA=v=>(v==null || v==="" || v==="-");
+  const cell=(label,v)=>{
+    if(isNA(v)) return null;                       // 값 자체가 없으면(해당없음) 숨김
+    const n=Number(v);
+    return `<span class="ex"><span class="ek">${label}</span>${n>0?won(v):"없음"}</span>`;
+  };
+  const p=cell("권리금",d.premium); if(p) bits.push(p);
+  const m=cell("관리비",d.mgmt);    if(m) bits.push(m);
   return bits.length ? `<div class="extras tnum">${bits.join("")}</div>` : "";
 }
 const num = v => (v===""||v==null)?null:(isNaN(+v)?null:+v);
