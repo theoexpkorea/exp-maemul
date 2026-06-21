@@ -91,9 +91,10 @@
   .own{font-size:11px; font-weight:700; color:var(--muted); border:1px solid var(--line);
     padding:2px 7px; border-radius:6px}
 
-  .bldg{font-size:16.5px; font-weight:800; letter-spacing:-.02em; line-height:1.25; margin:0 0 3px}
+  .bldg{font-size:16.5px; font-weight:800; letter-spacing:-.02em; line-height:1.3; margin:0 0 3px;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
   .addr{font-size:12.5px; color:var(--muted); line-height:1.4; margin:0 0 11px;
-    display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden}
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
 
   .price{font-size:18px; font-weight:800; letter-spacing:-.02em; margin-bottom:10px}
   .price .lbl{font-size:12.5px; font-weight:700; color:var(--muted); margin-right:5px}
@@ -178,7 +179,7 @@
       필터 <span class="badge" id="fbadge" style="display:none">0</span>
     </button>
     <button class="sort" id="openSort">
-      <span id="sortLabel">면적 넓은순</span>
+      <span id="sortLabel">매물번호순</span>
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>
     </button>
   </div>
@@ -265,6 +266,7 @@ let DATA = [{"type":"상가","id":"A0001","naver":"-","deal":"월세","status":"
 
 const TYPES = ["전체","상가","사무실","공장창고","지식산업센터","건물","토지","아파트","오피스텔","재건축재개발","주택빌라","원투룸","분양"];
 const SORTS = [
+  {k:"id_asc",  label:"매물번호순"},
   {k:"py_desc", label:"면적 넓은순"},
   {k:"py_asc",  label:"면적 좁은순"},
   {k:"unit_asc",label:"평단가 낮은순"},
@@ -276,7 +278,7 @@ const SORTS = [
 const state = {
   q:"", type:"전체", deals:new Set(), sidos:new Set(), sgs:new Set(),
   pyMin:null,pyMax:null, depMin:null,depMax:null, rentMin:null,rentMax:null, unitMin:null,unitMax:null,
-  sort:"py_desc"
+  sort:"id_asc"
 };
 
 /* ---- 금액 포맷: 만원 → 억/만원 ---- */
@@ -324,6 +326,7 @@ function filtered(){
   const s=state.sort;
   const uu = x => (x.unit==="-"||x.unit==null)?Infinity:x.unit;
   r.sort((a,b)=>{
+    if(s==="id_asc")  return String(a.id||"").localeCompare(String(b.id||""), undefined, {numeric:true});
     if(s==="py_desc") return b.pyeong-a.pyeong;
     if(s==="py_asc")  return a.pyeong-b.pyeong;
     if(s==="unit_asc")return uu(a)-uu(b);
