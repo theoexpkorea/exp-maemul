@@ -105,6 +105,9 @@
   .price{font-size:18px; font-weight:800; letter-spacing:-.02em; margin-bottom:10px}
   .price .lbl{font-size:12.5px; font-weight:700; color:var(--muted); margin-right:5px}
   .price .sep{color:var(--line); margin:0 7px; font-weight:600}
+  .extras{display:flex; gap:16px; margin:-3px 0 10px; flex-wrap:wrap}
+  .extras .ex{font-size:13.5px; font-weight:800; letter-spacing:-.01em}
+  .extras .ek{font-size:11.5px; font-weight:700; color:var(--muted); margin-right:5px}
 
   .meta{display:flex; gap:0; border-top:1px solid var(--line-2); padding-top:10px}
   .meta .m{flex:1; min-width:0}
@@ -222,6 +225,13 @@
       </div>
     </div>
     <div class="fgroup">
+      <div class="ft">매매가 (만원)</div>
+      <div class="range">
+        <input id="saleMin" inputmode="numeric" placeholder="최소"><span class="dash">–</span>
+        <input id="saleMax" inputmode="numeric" placeholder="최대"><span class="unit">만원</span>
+      </div>
+    </div>
+    <div class="fgroup">
       <div class="ft">보증금 (만원)</div>
       <div class="range">
         <input id="depMin" inputmode="numeric" placeholder="최소"><span class="dash">–</span>
@@ -240,6 +250,13 @@
       <div class="range">
         <input id="unitMin" inputmode="numeric" placeholder="최소"><span class="dash">–</span>
         <input id="unitMax" inputmode="numeric" placeholder="최대"><span class="unit">원</span>
+      </div>
+    </div>
+    <div class="fgroup">
+      <div class="ft">권리금 (만원)</div>
+      <div class="range">
+        <input id="premMin" inputmode="numeric" placeholder="최소"><span class="dash">–</span>
+        <input id="premMax" inputmode="numeric" placeholder="최대"><span class="unit">만원</span>
       </div>
     </div>
   </div>
@@ -283,7 +300,7 @@ const SORTS = [
 
 const state = {
   q:"", type:"전체", deals:new Set(), sidos:new Set(), sgs:new Set(),
-  pyMin:null,pyMax:null, depMin:null,depMax:null, rentMin:null,rentMax:null, unitMin:null,unitMax:null,
+  pyMin:null,pyMax:null, saleMin:null,saleMax:null, depMin:null,depMax:null, rentMin:null,rentMax:null, unitMin:null,unitMax:null, premMin:null,premMax:null,
   sort:"id_asc"
 };
 
@@ -304,6 +321,13 @@ function priceLine(d){
   return s;
 }
 function unitTxt(u){ return (u==null||u==="-") ? "-" : Math.round(u).toLocaleString()+"원"; }
+function extrasLine(d){
+  const bits=[];
+  const ok=v=>(v!=null && v!=="" && v!=="-" && Number(v)>0);
+  if(ok(d.premium)) bits.push(`<span class="ex"><span class="ek">권리금</span>${won(d.premium)}</span>`);
+  if(ok(d.mgmt))    bits.push(`<span class="ex"><span class="ek">관리비</span>${won(d.mgmt)}</span>`);
+  return bits.length ? `<div class="extras tnum">${bits.join("")}</div>` : "";
+}
 const num = v => (v===""||v==null)?null:(isNaN(+v)?null:+v);
 
 /* ---- 매물종류 색상 (상업=블루계열 / 주거=그린계열 / 토지·특수=앰버·퍼플계열) ---- */
@@ -344,6 +368,8 @@ function filtered(){
     if(state.sgs.size && !state.sgs.has(d.sigungu)) return false;
     if(state.pyMin!=null && d.pyeong<state.pyMin) return false;
     if(state.pyMax!=null && d.pyeong>state.pyMax) return false;
+    if(state.saleMin!=null && d.sale<state.saleMin) return false;
+    if(state.saleMax!=null && d.sale>state.saleMax) return false;
     if(state.depMin!=null && d.deposit<state.depMin) return false;
     if(state.depMax!=null && d.deposit>state.depMax) return false;
     if(state.rentMin!=null && d.rent<state.rentMin) return false;
@@ -351,6 +377,9 @@ function filtered(){
     const u = (d.unit==="-"||d.unit==null)?null:d.unit;
     if(state.unitMin!=null && (u==null||u<state.unitMin)) return false;
     if(state.unitMax!=null && (u==null||u>state.unitMax)) return false;
+    const pm = (d.premium==null||d.premium==="-")?null:d.premium;
+    if(state.premMin!=null && (pm==null||pm<state.premMin)) return false;
+    if(state.premMax!=null && (pm==null||pm>state.premMax)) return false;
     if(state.q){
       const q=state.q.toLowerCase();
       const hay=`${d.bldg} ${d.addr} ${d.id} ${d.dong} ${d.sigungu}`.toLowerCase();
@@ -393,6 +422,7 @@ function render(){
       <div class="bldg">${d.bldg}</div>
       <div class="addr">${d.addr}</div>
       <div class="price tnum">${priceLine(d)}</div>
+      ${extrasLine(d)}
       <div class="meta">
         <div class="m"><div class="k">실측면적</div><div class="v tnum">${d.pyeong}평</div></div>
         <div class="m"><div class="k">전용 ㎡</div><div class="v tnum">${d.m2}㎡</div></div>
@@ -401,7 +431,7 @@ function render(){
     </div>`).join("");
   // 필터 뱃지
   let active = state.deals.size+state.sidos.size+state.sgs.size +
-    [state.pyMin,state.pyMax,state.depMin,state.depMax,state.rentMin,state.rentMax,state.unitMin,state.unitMax].filter(x=>x!=null).length;
+    [state.pyMin,state.pyMax,state.saleMin,state.saleMax,state.depMin,state.depMax,state.rentMin,state.rentMax,state.unitMin,state.unitMax,state.premMin,state.premMax].filter(x=>x!=null).length;
   const b=document.getElementById("fbadge");
   if(active){b.style.display="inline-flex"; b.textContent=active;} else b.style.display="none";
 }
@@ -455,19 +485,21 @@ function closeSheet(){ sheet.classList.remove("on"); scrim.classList.remove("on"
 document.getElementById("openFilters").addEventListener("click",openSheet);
 scrim.addEventListener("click",()=>{closeSheet(); closeSort();});
 function syncInputs(){
-  const m={pyMin:"pyMin",pyMax:"pyMax",depMin:"depMin",depMax:"depMax",rentMin:"rentMin",rentMax:"rentMax",unitMin:"unitMin",unitMax:"unitMax"};
+  const m={pyMin:"pyMin",pyMax:"pyMax",saleMin:"saleMin",saleMax:"saleMax",depMin:"depMin",depMax:"depMax",rentMin:"rentMin",rentMax:"rentMax",unitMin:"unitMin",unitMax:"unitMax",premMin:"premMin",premMax:"premMax"};
   for(const k in m) document.getElementById(m[k]).value = state[k]==null?"":state[k];
 }
 function pullInputs(){
   state.pyMin=num(pyMin.value); state.pyMax=num(pyMax.value);
+  state.saleMin=num(saleMin.value); state.saleMax=num(saleMax.value);
   state.depMin=num(depMin.value); state.depMax=num(depMax.value);
   state.rentMin=num(rentMin.value); state.rentMax=num(rentMax.value);
   state.unitMin=num(unitMin.value); state.unitMax=num(unitMax.value);
+  state.premMin=num(premMin.value); state.premMax=num(premMax.value);
 }
 document.getElementById("applyBtn").addEventListener("click",()=>{pullInputs(); render(); closeSheet();});
 document.getElementById("resetAll").addEventListener("click",()=>{
   state.deals.clear(); state.sidos.clear(); state.sgs.clear();
-  ["pyMin","pyMax","depMin","depMax","rentMin","rentMax","unitMin","unitMax"].forEach(k=>state[k]=null);
+  ["pyMin","pyMax","saleMin","saleMax","depMin","depMax","rentMin","rentMax","unitMin","unitMax","premMin","premMax"].forEach(k=>state[k]=null);
   document.querySelectorAll(".opt.on").forEach(o=>o.classList.remove("on"));
   rebuildSG(); syncInputs(); render();
 });
