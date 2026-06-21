@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#161A20">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>매물 필터뷰</title>
+<style>
+  :root{
+    --bg:#F4F5F7; --surface:#FFFFFF; --ink:#15181E; --muted:#727A86;
+    --line:#E6E8EC; --line-2:#EEF0F3; --accent:#2746E6; --accent-soft:#EEF1FE;
+    --sale:#1F7A4D; --sale-bg:#E7F4ED; --jeonse:#9A5B14; --jeonse-bg:#FBF1E2;
+    --wolse:#2746E6; --wolse-bg:#EEF1FE; --chip:#F1F2F5;
+    --shadow:0 1px 2px rgba(20,24,32,.04),0 6px 16px rgba(20,24,32,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Pretendard","Pretendard Variable",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    background:var(--bg); color:var(--ink);
+    font-feature-settings:"tnum" 1; -webkit-font-smoothing:antialiased;
+  }
+  .tnum{font-variant-numeric:tabular-nums}
+
+  /* Header */
+  header{
+    position:sticky; top:0; z-index:30; background:var(--surface);
+    border-bottom:1px solid var(--line);
+    padding:calc(env(safe-area-inset-top) + 12px) 16px 0;
+  }
+  .head-row{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+  .brand{display:flex; align-items:baseline; gap:8px}
+  .brand h1{font-size:18px; font-weight:800; letter-spacing:-.02em; margin:0}
+  .brand .by{font-size:11px; color:var(--muted); font-weight:600; letter-spacing:.02em}
+  .count{font-size:13px; color:var(--muted); font-weight:600}
+  .count b{color:var(--accent); font-weight:800}
+
+  .search{
+    margin-top:12px; display:flex; align-items:center; gap:8px;
+    background:var(--chip); border-radius:11px; padding:0 12px; height:42px;
+  }
+  .search svg{flex:none; opacity:.5}
+  .search input{
+    border:0; background:transparent; outline:0; width:100%; height:100%;
+    font-size:15px; color:var(--ink); font-family:inherit;
+  }
+  .search input::placeholder{color:#9aa1ab}
+  .search .clr{display:none; border:0;background:transparent;color:var(--muted);font-size:18px;padding:4px;cursor:pointer}
+
+  /* type chips */
+  .chips{display:flex; gap:7px; overflow-x:auto; padding:12px 16px 0; margin:0 -16px;
+    scrollbar-width:none; -ms-overflow-style:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chips:first-child{padding-left:16px}
+  .chip{
+    flex:none; border:1px solid var(--line); background:var(--surface);
+    color:var(--muted); font-size:13.5px; font-weight:700; letter-spacing:-.01em;
+    padding:7px 13px; border-radius:999px; cursor:pointer; transition:.12s;
+  }
+  .chip.on{background:var(--ink); color:#fff; border-color:var(--ink)}
+
+  .toolbar{display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 16px; }
+  .toolbar .filters{
+    display:inline-flex; align-items:center; gap:6px; background:var(--surface);
+    border:1px solid var(--line); border-radius:9px; height:34px; padding:0 12px;
+    font-size:13px; font-weight:700; color:var(--ink); cursor:pointer;
+  }
+  .toolbar .filters .badge{background:var(--accent); color:#fff; font-size:11px;
+    min-width:17px; height:17px; border-radius:9px; display:inline-flex; align-items:center;
+    justify-content:center; padding:0 4px; font-weight:800}
+  .sort{display:inline-flex; align-items:center; gap:4px; font-size:13px; font-weight:700;
+    color:var(--muted); background:transparent; border:0; cursor:pointer; padding:6px}
+
+  /* list */
+  main{padding:0 12px calc(env(safe-area-inset-bottom) + 28px)}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:14px 15px; margin:0 4px 11px; box-shadow:var(--shadow); cursor:pointer;
+  }
+  .card:active{transform:scale(.994)}
+  .card-top{display:flex; align-items:center; gap:6px; margin-bottom:9px; flex-wrap:wrap}
+  .tag{font-size:11.5px; font-weight:800; padding:3px 8px; border-radius:7px; letter-spacing:-.01em}
+  .tag.t-type{background:#F0F1F4; color:#3B414C}
+  .tag.t-deal.매매{background:var(--sale-bg); color:var(--sale)}
+  .tag.t-deal.전세{background:var(--jeonse-bg); color:var(--jeonse)}
+  .tag.t-deal.월세{background:var(--wolse-bg); color:var(--wolse)}
+  .id{margin-left:auto; font-size:12px; font-weight:700; color:#aab0ba}
+  .own{font-size:11px; font-weight:700; color:var(--muted); border:1px solid var(--line);
+    padding:2px 7px; border-radius:6px}
+
+  .bldg{font-size:16.5px; font-weight:800; letter-spacing:-.02em; line-height:1.25; margin:0 0 3px}
+  .addr{font-size:12.5px; color:var(--muted); line-height:1.4; margin:0 0 11px;
+    display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden}
+
+  .price{font-size:18px; font-weight:800; letter-spacing:-.02em; margin-bottom:10px}
+  .price .lbl{font-size:12.5px; font-weight:700; color:var(--muted); margin-right:5px}
+  .price .sep{color:var(--line); margin:0 7px; font-weight:600}
+
+  .meta{display:flex; gap:0; border-top:1px solid var(--line-2); padding-top:10px}
+  .meta .m{flex:1; min-width:0}
+  .meta .m + .m{border-left:1px solid var(--line-2); padding-left:12px}
+  .meta .k{font-size:10.5px; color:#9aa1ab; font-weight:700; letter-spacing:.01em; margin-bottom:2px}
+  .meta .v{font-size:13.5px; font-weight:800; letter-spacing:-.01em}
+
+  .empty{text-align:center; padding:64px 24px; color:var(--muted)}
+  .empty .em-t{font-size:15px; font-weight:700; color:var(--ink); margin-bottom:6px}
+  .empty .em-s{font-size:13px}
+
+  /* bottom sheet */
+  .scrim{position:fixed; inset:0; background:rgba(15,18,24,.42); z-index:40; opacity:0;
+    pointer-events:none; transition:.2s}
+  .scrim.on{opacity:1; pointer-events:auto}
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:50; background:var(--surface);
+    border-radius:20px 20px 0 0; transform:translateY(100%); transition:transform .26s cubic-bezier(.32,.72,0,1);
+    max-height:86vh; display:flex; flex-direction:column; padding-bottom:env(safe-area-inset-bottom);
+  }
+  .sheet.on{transform:translateY(0)}
+  .sheet-grip{width:38px; height:4px; background:#D9DCE1; border-radius:3px; margin:10px auto 4px}
+  .sheet-head{display:flex; align-items:center; justify-content:space-between; padding:6px 18px 12px;
+    border-bottom:1px solid var(--line)}
+  .sheet-head h2{font-size:16px; font-weight:800; margin:0}
+  .sheet-head .reset{font-size:13px; font-weight:700; color:var(--muted); background:0; border:0; cursor:pointer}
+  .sheet-body{overflow-y:auto; padding:4px 18px 12px}
+  .fgroup{padding:16px 0; border-bottom:1px solid var(--line-2)}
+  .fgroup:last-child{border-bottom:0}
+  .fgroup > .ft{font-size:13px; font-weight:800; margin-bottom:11px}
+  .opts{display:flex; flex-wrap:wrap; gap:7px}
+  .opt{border:1px solid var(--line); background:var(--surface); color:var(--muted);
+    font-size:13.5px; font-weight:700; padding:8px 13px; border-radius:9px; cursor:pointer}
+  .opt.on{background:var(--accent-soft); color:var(--accent); border-color:var(--accent)}
+  .range{display:flex; align-items:center; gap:9px}
+  .range input{width:100%; height:44px; border:1px solid var(--line); border-radius:10px;
+    background:var(--bg); padding:0 12px; font-size:14px; font-family:inherit; text-align:right;
+    font-variant-numeric:tabular-nums; outline:0; color:var(--ink)}
+  .range input:focus{border-color:var(--accent); background:#fff}
+  .range .dash{color:var(--muted); font-weight:700; flex:none}
+  .range .unit{font-size:12px; color:var(--muted); font-weight:700; flex:none}
+  .sheet-foot{padding:12px 18px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid var(--line);
+    background:var(--surface)}
+  .apply{width:100%; height:52px; border:0; border-radius:13px; background:var(--ink); color:#fff;
+    font-size:15.5px; font-weight:800; cursor:pointer; font-family:inherit}
+  .apply:active{opacity:.9}
+
+  /* sort menu */
+  .sortmenu{position:fixed; z-index:50; background:var(--surface); border:1px solid var(--line);
+    border-radius:13px; box-shadow:0 12px 30px rgba(20,24,32,.16); overflow:hidden; display:none;
+    min-width:168px}
+  .sortmenu.on{display:block}
+  .sortmenu button{display:flex; align-items:center; justify-content:space-between; width:100%;
+    background:0; border:0; padding:13px 15px; font-size:14px; font-weight:700; color:var(--ink);
+    cursor:pointer; text-align:left; font-family:inherit}
+  .sortmenu button + button{border-top:1px solid var(--line-2)}
+  .sortmenu button.on{color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <div class="head-row">
+    <div class="brand">
+      <h1 id="appTitle">매물 필터뷰</h1>
+      <span class="by" id="appBy">eXp · KJH</span>
+    </div>
+    <div class="count"><b id="cnt">0</b>건</div>
+  </div>
+  <div class="search">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="q" placeholder="건물명 · 주소 · 매물번호 검색" autocomplete="off">
+    <button class="clr" id="clr">×</button>
+  </div>
+  <div class="chips" id="typechips"></div>
+  <div class="toolbar">
+    <button class="filters" id="openFilters">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+      필터 <span class="badge" id="fbadge" style="display:none">0</span>
+    </button>
+    <button class="sort" id="openSort">
+      <span id="sortLabel">면적 넓은순</span>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="list"></main>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="sheet" id="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head">
+    <h2>상세 필터</h2>
+    <button class="reset" id="resetAll">초기화</button>
+  </div>
+  <div class="sheet-body">
+    <div class="fgroup">
+      <div class="ft">거래구분</div>
+      <div class="opts" id="dealOpts"></div>
+    </div>
+    <div class="fgroup">
+      <div class="ft">시도</div>
+      <div class="opts" id="sidoOpts"></div>
+    </div>
+    <div class="fgroup">
+      <div class="ft">시군구</div>
+      <div class="opts" id="sgOpts"></div>
+    </div>
+    <div class="fgroup">
+      <div class="ft">실측면적 (평)</div>
+      <div class="range">
+        <input id="pyMin" inputmode="numeric" placeholder="최소"><span class="dash">–</span>
+        <input id="pyMax" inputmode="numeric" placeholder="최대"><span class="unit">평</span>
+      </div>
+    </div>
+    <div class="fgroup">
+      <div class="ft">보증금 (만원)</div>
+      <div class="range">
+        <input id="depMin" inputmode="numeric" placeholder="최소"><span class="dash">–</span>
+        <input id="depMax" inputmode="numeric" placeholder="최대"><span class="unit">만원</span>
+      </div>
+    </div>
+    <div class="fgroup">
+      <div class="ft">월세 (만원)</div>
+      <div class="range">
+        <input id="rentMin" inputmode="numeric" placeholder="최소"><span class="dash">–</span>
+        <input id="rentMax" inputmode="numeric" placeholder="최대"><span class="unit">만원</span>
+      </div>
+    </div>
+    <div class="fgroup">
+      <div class="ft">임대료+관리비 평단가 (원)</div>
+      <div class="range">
+        <input id="unitMin" inputmode="numeric" placeholder="최소"><span class="dash">–</span>
+        <input id="unitMax" inputmode="numeric" placeholder="최대"><span class="unit">원</span>
+      </div>
+    </div>
+  </div>
+  <div class="sheet-foot">
+    <button class="apply" id="applyBtn">매물 보기</button>
+  </div>
+</div>
+
+<div class="sortmenu" id="sortmenu"></div>
+
+<script>
+/* ===================== 설정 (CONFIG) =====================
+   여기 두 줄만 바꾸면 됨.
+   MODE     : "internal" = 내부용(전체·매물번호·자기/타부동산 표시)
+              "client"   = 고객용(민감정보 숨김)
+   DATA_URL : null  = 아래 박혀있는 데이터 사용 (1단계: 정적/수동갱신)
+              "주소" = 구글시트 게시 JSON / Apps Script URL 넣으면 라이브 (2단계)
+   ※ 고객용 배포 시에는 DATA_URL/embedded 데이터 자체에서 내부필드를 빼서 내보낼 것.
+   ======================================================== */
+const CONFIG = { MODE:"internal", DATA_URL:null, TITLE:null };
+
+/* ===== 데이터: 엑셀 매물장 필터뷰에서 추출 (V1.84) ===== */
+let DATA = [{"type":"상가","id":"A0001","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"경기도","sigungu":"용인시 기흥구","dong":"보정동","addr":"경기도 용인시 기흥구 보정동 533외 2필지 1층","bldg":"보정동 533 근생","pyeong":435.6,"m2":1440,"sale":0,"deposit":60000,"rent":4000,"unit":96418.73,"roi":null,"noi":null,"premium":0},{"type":"상가","id":"A0002","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"중구","dong":"서소문동","addr":"서울특별시 중구 서소문동 90외 3필지 4층 전체","bldg":"대양빌딩","pyeong":63.94,"m2":211.37,"sale":0,"deposit":9600,"rent":832,"unit":168159.16,"roi":null,"noi":null,"premium":0},{"type":"상가","id":"A0003","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"동대문구","dong":"청량리동","addr":"서울특별시 동대문구 청량리동 755외 1필지 1층 전체","bldg":"청량리동 755 근생","pyeong":49.8,"m2":164.63,"sale":0,"deposit":30000,"rent":2100,"unit":451800.64,"roi":null,"noi":null,"premium":0},{"type":"상가","id":"A0004","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"중구","dong":"서소문동","addr":"서울특별시 중구 서소문동 25외 1필지 2층 전체","bldg":"서소문동 25 빌딩","pyeong":42.09,"m2":139.13,"sale":0,"deposit":20000,"rent":550,"unit":166718.84,"roi":null,"noi":null,"premium":0},{"type":"상가","id":"A0005","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"중구","dong":"서소문동","addr":"서울특별시 중구 서소문동 25외 1필지 3층 전체","bldg":"서소문동 25 빌딩","pyeong":42.09,"m2":139.13,"sale":0,"deposit":0,"rent":0,"unit":"-","roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0001","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"송파구","dong":"신천동","addr":"서울특별시 송파구 신천동 29 20층 일부","bldg":"롯데월드몰 월드타워동","pyeong":555.65,"m2":1836.85,"sale":0,"deposit":185040,"rent":18504,"unit":454403.21,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0002","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"송파구","dong":"신천동","addr":"서울특별시 송파구 신천동 29 12층 일부","bldg":"롯데월드몰 월드타워동","pyeong":71.78,"m2":237.29,"sale":0,"deposit":24297,"rent":2429,"unit":466978.95,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0003","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"송파구","dong":"신천동","addr":"서울특별시 송파구 신천동 29 5층 일부","bldg":"롯데월드몰 월드타워동","pyeong":103.19,"m2":341.13,"sale":0,"deposit":22153,"rent":2215,"unit":331216.97,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0004","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"송파구","dong":"신천동","addr":"서울특별시 송파구 신천동 29 3001호","bldg":"롯데월드몰 월드타워동","pyeong":2.6,"m2":8.6,"sale":0,"deposit":561,"rent":187,"unit":726419.81,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0005","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"송파구","dong":"신천동","addr":"서울특별시 송파구 신천동 29 3002호","bldg":"롯데월드몰 월드타워동","pyeong":4.0,"m2":13.22,"sale":0,"deposit":942,"rent":314,"unit":792846.43,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0006","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"송파구","dong":"신천동","addr":"서울특별시 송파구 신천동 29 3003호","bldg":"롯데월드몰 월드타워동","pyeong":5.3,"m2":17.52,"sale":0,"deposit":1647,"rent":549,"unit":1046202.84,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0007","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"송파구","dong":"신천동","addr":"서울특별시 송파구 신천동 29 3004호","bldg":"롯데월드몰 월드타워동","pyeong":72.7,"m2":240.33,"sale":0,"deposit":17558,"rent":5852,"unit":812998.63,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0008","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"송파구","dong":"신천동","addr":"서울특별시 송파구 신천동 29 3001호~4호","bldg":"롯데월드몰 월드타워동","pyeong":84.6,"m2":279.67,"sale":0,"deposit":20709,"rent":6903,"unit":824113.31,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0009","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"송파구","dong":"신천동","addr":"서울특별시 송파구 신천동 29 3066호","bldg":"롯데월드몰 월드타워동","pyeong":76.3,"m2":252.23,"sale":0,"deposit":15623,"rent":5207,"unit":689259.9,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0010","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"강남구","dong":"대치동","addr":"서울특별시 강남구 대치동 946-18 지하1층 일부","bldg":"EG빌딩","pyeong":189.4,"m2":626.13,"sale":0,"deposit":52913,"rent":5291,"unit":354815.42,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0011","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"강남구","dong":"대치동","addr":"서울특별시 강남구 대치동 946-18 1층 일부","bldg":"EG빌딩","pyeong":55.13,"m2":182.25,"sale":0,"deposit":32379,"rent":3237,"unit":694691.03,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0012","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"강남구","dong":"대치동","addr":"서울특별시 강남구 대치동 946-18 2층 일부","bldg":"EG빌딩","pyeong":152.05,"m2":502.66,"sale":0,"deposit":43460,"rent":4346,"unit":363020.38,"roi":null,"noi":null,"premium":0},{"type":"사무실","id":"B0013","naver":"-","deal":"월세","status":"거래가능","own":"자기매물","sido":"서울특별시","sigungu":"강남구","dong":"대치동","addr":"서울특별시 강남구 대치동 946-18 3층 일부","bldg":"EG빌딩","pyeong":189.4,"m2":626.13,"sale":0,"deposit":52913,"rent":5291,"unit":354815.42,"roi":null,"noi":null,"premium":0},{"type":"아파트","id":"G0001","naver":2628885571,"deal":"매매","status":"거래가능","own":"타부동산","sido":"인천광역시","sigungu":"서구","dong":"청라동","addr":"인천광역시 서구 청라동 149-2 청라제일풍경채2차에듀앤파크 329-102","bldg":"제일풍경채2차에듀앤파크","pyeong":22.47,"m2":74.27,"sale":63500,"deposit":33000,"rent":6,"unit":64989.51,"roi":0.0,"noi":72,"premium":null}];
+
+const TYPES = ["전체","상가","사무실","공장창고","지식산업센터","건물","토지","아파트","오피스텔","재건축재개발","주택빌라","원투룸","분양"];
+const SORTS = [
+  {k:"py_desc", label:"면적 넓은순"},
+  {k:"py_asc",  label:"면적 좁은순"},
+  {k:"unit_asc",label:"평단가 낮은순"},
+  {k:"unit_desc",label:"평단가 높은순"},
+  {k:"dep_asc", label:"보증금 낮은순"},
+  {k:"dep_desc",label:"보증금 높은순"},
+];
+
+const state = {
+  q:"", type:"전체", deals:new Set(), sidos:new Set(), sgs:new Set(),
+  pyMin:null,pyMax:null, depMin:null,depMax:null, rentMin:null,rentMax:null, unitMin:null,unitMax:null,
+  sort:"py_desc"
+};
+
+/* ---- 금액 포맷: 만원 → 억/만원 ---- */
+function won(manwon){
+  if(manwon==null || manwon==="-" || manwon===0) return "-";
+  const n = Math.round(manwon);
+  const eok = Math.floor(n/10000), man = n%10000;
+  if(eok>0 && man>0) return `${eok}억 ${man.toLocaleString()}만`;
+  if(eok>0) return `${eok}억`;
+  return `${man.toLocaleString()}만`;
+}
+function priceLine(d){
+  if(d.deal==="매매") return `<span class="lbl">매매</span>${won(d.sale)}`;
+  if(d.deal==="전세") return `<span class="lbl">전세</span>${won(d.deposit)}`;
+  // 월세
+  let s = `<span class="lbl">보증</span>${won(d.deposit)}<span class="sep">/</span><span class="lbl">월</span>${won(d.rent)}`;
+  return s;
+}
+function unitTxt(u){ return (u==null||u==="-") ? "-" : Math.round(u).toLocaleString()+"원"; }
+const num = v => (v===""||v==null)?null:(isNaN(+v)?null:+v);
+
+/* ---- 필터 적용 ---- */
+function filtered(){
+  let r = DATA.filter(d=>{
+    if(state.type!=="전체" && d.type!==state.type) return false;
+    if(state.deals.size && !state.deals.has(d.deal)) return false;
+    if(state.sidos.size && !state.sidos.has(d.sido)) return false;
+    if(state.sgs.size && !state.sgs.has(d.sigungu)) return false;
+    if(state.pyMin!=null && d.pyeong<state.pyMin) return false;
+    if(state.pyMax!=null && d.pyeong>state.pyMax) return false;
+    if(state.depMin!=null && d.deposit<state.depMin) return false;
+    if(state.depMax!=null && d.deposit>state.depMax) return false;
+    if(state.rentMin!=null && d.rent<state.rentMin) return false;
+    if(state.rentMax!=null && d.rent>state.rentMax) return false;
+    const u = (d.unit==="-"||d.unit==null)?null:d.unit;
+    if(state.unitMin!=null && (u==null||u<state.unitMin)) return false;
+    if(state.unitMax!=null && (u==null||u>state.unitMax)) return false;
+    if(state.q){
+      const q=state.q.toLowerCase();
+      const hay=`${d.bldg} ${d.addr} ${d.id} ${d.dong} ${d.sigungu}`.toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const s=state.sort;
+  const uu = x => (x.unit==="-"||x.unit==null)?Infinity:x.unit;
+  r.sort((a,b)=>{
+    if(s==="py_desc") return b.pyeong-a.pyeong;
+    if(s==="py_asc")  return a.pyeong-b.pyeong;
+    if(s==="unit_asc")return uu(a)-uu(b);
+    if(s==="unit_desc")return uu(b)-uu(a);
+    if(s==="dep_asc") return a.deposit-b.deposit;
+    if(s==="dep_desc")return b.deposit-a.deposit;
+    return 0;
+  });
+  return r;
+}
+
+/* ---- 렌더 ---- */
+function render(){
+  const isClient = CONFIG.MODE==="client";
+  const r = filtered();
+  document.getElementById("cnt").textContent = r.length;
+  const list = document.getElementById("list");
+  if(!r.length){
+    list.innerHTML = `<div class="empty"><div class="em-t">조건에 맞는 매물이 없어요</div><div class="em-s">필터를 조정하거나 초기화해 보세요</div></div>`;
+    return;
+  }
+  list.innerHTML = r.map(d=>`
+    <div class="card">
+      <div class="card-top">
+        <span class="tag t-type">${d.type}</span>
+        <span class="tag t-deal ${d.deal}">${d.deal}</span>
+        ${isClient ? '' : `<span class="own">${d.own}</span><span class="id">${d.id}</span>`}
+      </div>
+      <div class="bldg">${d.bldg}</div>
+      <div class="addr">${d.addr}</div>
+      <div class="price tnum">${priceLine(d)}</div>
+      <div class="meta">
+        <div class="m"><div class="k">실측면적</div><div class="v tnum">${d.pyeong}평</div></div>
+        <div class="m"><div class="k">전용 ㎡</div><div class="v tnum">${d.m2}㎡</div></div>
+        <div class="m"><div class="k">평단가</div><div class="v tnum">${unitTxt(d.unit)}</div></div>
+      </div>
+    </div>`).join("");
+  // 필터 뱃지
+  let active = state.deals.size+state.sidos.size+state.sgs.size +
+    [state.pyMin,state.pyMax,state.depMin,state.depMax,state.rentMin,state.rentMax,state.unitMin,state.unitMax].filter(x=>x!=null).length;
+  const b=document.getElementById("fbadge");
+  if(active){b.style.display="inline-flex"; b.textContent=active;} else b.style.display="none";
+}
+
+/* ---- 타입 칩 ---- */
+const tc=document.getElementById("typechips");
+tc.innerHTML=TYPES.map(t=>`<button class="chip ${t===state.type?'on':''}" data-t="${t}">${t}</button>`).join("");
+tc.addEventListener("click",e=>{
+  const btn=e.target.closest(".chip"); if(!btn)return;
+  state.type=btn.dataset.t;
+  [...tc.children].forEach(c=>c.classList.toggle("on",c.dataset.t===state.type));
+  render();
+});
+
+/* ---- 검색 ---- */
+const qEl=document.getElementById("q"), clr=document.getElementById("clr");
+qEl.addEventListener("input",()=>{state.q=qEl.value.trim(); clr.style.display=qEl.value?"block":"none"; render();});
+clr.addEventListener("click",()=>{qEl.value="";state.q="";clr.style.display="none";render();qEl.focus();});
+
+/* ---- 옵션 빌드 ---- */
+function chipset(elId, values, set){
+  const el=document.getElementById(elId);
+  el.innerHTML=values.map(v=>`<button class="opt" data-v="${v}">${v}</button>`).join("");
+  el.addEventListener("click",e=>{
+    const o=e.target.closest(".opt"); if(!o)return;
+    const v=o.dataset.v;
+    if(set.has(v)) set.delete(v); else set.add(v);
+    o.classList.toggle("on", set.has(v));
+    if(elId==="sidoOpts") rebuildSG();
+  });
+}
+const uniq=(k)=>[...new Set(DATA.map(d=>d[k]))];
+function rebuildSG(){
+  const pool = state.sidos.size ? DATA.filter(d=>state.sidos.has(d.sido)) : DATA;
+  const vals=[...new Set(pool.map(d=>d.sigungu))];
+  for(const v of [...state.sgs]) if(!vals.includes(v)) state.sgs.delete(v);
+  const el=document.getElementById("sgOpts");
+  el.innerHTML=vals.map(v=>`<button class="opt ${state.sgs.has(v)?'on':''}" data-v="${v}">${v}</button>`).join("");
+}
+document.getElementById("sgOpts").addEventListener("click",e=>{
+  const o=e.target.closest(".opt"); if(!o)return;
+  const v=o.dataset.v;
+  if(state.sgs.has(v)) state.sgs.delete(v); else state.sgs.add(v);
+  o.classList.toggle("on", state.sgs.has(v));
+});
+
+/* ---- 바텀시트 ---- */
+const sheet=document.getElementById("sheet"), scrim=document.getElementById("scrim");
+function openSheet(){ syncInputs(); sheet.classList.add("on"); scrim.classList.add("on"); }
+function closeSheet(){ sheet.classList.remove("on"); scrim.classList.remove("on"); }
+document.getElementById("openFilters").addEventListener("click",openSheet);
+scrim.addEventListener("click",()=>{closeSheet(); closeSort();});
+function syncInputs(){
+  const m={pyMin:"pyMin",pyMax:"pyMax",depMin:"depMin",depMax:"depMax",rentMin:"rentMin",rentMax:"rentMax",unitMin:"unitMin",unitMax:"unitMax"};
+  for(const k in m) document.getElementById(m[k]).value = state[k]==null?"":state[k];
+}
+function pullInputs(){
+  state.pyMin=num(pyMin.value); state.pyMax=num(pyMax.value);
+  state.depMin=num(depMin.value); state.depMax=num(depMax.value);
+  state.rentMin=num(rentMin.value); state.rentMax=num(rentMax.value);
+  state.unitMin=num(unitMin.value); state.unitMax=num(unitMax.value);
+}
+document.getElementById("applyBtn").addEventListener("click",()=>{pullInputs(); render(); closeSheet();});
+document.getElementById("resetAll").addEventListener("click",()=>{
+  state.deals.clear(); state.sidos.clear(); state.sgs.clear();
+  ["pyMin","pyMax","depMin","depMax","rentMin","rentMax","unitMin","unitMax"].forEach(k=>state[k]=null);
+  document.querySelectorAll(".opt.on").forEach(o=>o.classList.remove("on"));
+  rebuildSG(); syncInputs(); render();
+});
+
+/* ---- 정렬 메뉴 ---- */
+const sortmenu=document.getElementById("sortmenu");
+sortmenu.innerHTML=SORTS.map(s=>`<button data-k="${s.k}" class="${s.k===state.sort?'on':''}">${s.label}${s.k===state.sort?' ✓':''}</button>`).join("");
+function openSort(){
+  const btn=document.getElementById("openSort").getBoundingClientRect();
+  sortmenu.style.top=(btn.bottom+6)+"px";
+  sortmenu.style.right=(window.innerWidth-btn.right)+"px";
+  sortmenu.classList.add("on"); scrim.classList.add("on");
+}
+function closeSort(){ sortmenu.classList.remove("on"); if(!sheet.classList.contains("on")) scrim.classList.remove("on"); }
+document.getElementById("openSort").addEventListener("click",e=>{e.stopPropagation(); openSort();});
+sortmenu.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  state.sort=b.dataset.k;
+  document.getElementById("sortLabel").textContent=SORTS.find(s=>s.k===state.sort).label;
+  sortmenu.innerHTML=SORTS.map(s=>`<button data-k="${s.k}" class="${s.k===state.sort?'on':''}">${s.label}${s.k===state.sort?' ✓':''}</button>`).join("");
+  closeSort();
+  render();
+});
+
+function applyMode(){
+  const isClient = CONFIG.MODE==="client";
+  document.getElementById("appTitle").textContent = CONFIG.TITLE || (isClient ? "추천 매물" : "매물 필터뷰");
+  document.getElementById("appBy").textContent = isClient ? "eXp 김정혁 공인중개사" : "eXp · KJH";
+}
+async function boot(){
+  applyMode();
+  if(CONFIG.DATA_URL){
+    try{
+      const res = await fetch(CONFIG.DATA_URL, {cache:"no-store"});
+      const j = await res.json();
+      if(Array.isArray(j) && j.length) DATA = j;   // 라이브 데이터로 교체
+    }catch(e){ console.error("라이브 데이터 로드 실패 → embedded 사용:", e); }
+  }
+  chipset("dealOpts", ["매매","전세","월세"], state.deals);
+  chipset("sidoOpts", uniq("sido"), state.sidos);
+  rebuildSG();
+  render();
+}
+boot();
+</script>
+</body>
+</html>
