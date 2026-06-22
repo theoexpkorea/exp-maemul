@@ -97,6 +97,8 @@
   .own.own-joint{background:var(--accent); color:#fff; border-color:var(--accent)}
   .own.own-other{background:#fff; color:var(--muted); border-color:var(--line)}
 
+  .thumb{width:100%; height:160px; border-radius:11px; overflow:hidden; margin:2px 0 11px; background:#EEF0F3}
+  .thumb img{width:100%; height:100%; object-fit:cover; display:block}
   .bldg{font-size:16.5px; font-weight:800; letter-spacing:-.02em; line-height:1.3; margin:0 0 3px;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
   .addr{font-size:12.5px; color:var(--muted); line-height:1.4; margin:0 0 11px;
@@ -178,7 +180,7 @@
   </div>
   <div class="search">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-    <input id="q" placeholder="건물명 · 주소 · 매물번호 검색" autocomplete="off">
+    <input id="q" placeholder="건물명 · 주소 · 매물번호 · 네이버번호" autocomplete="off">
     <button class="clr" id="clr">×</button>
   </div>
   <div class="chips" id="typechips"></div>
@@ -294,8 +296,16 @@ const SORTS = [
   {k:"py_asc",  label:"면적 좁은순"},
   {k:"unit_asc",label:"평단가 낮은순"},
   {k:"unit_desc",label:"평단가 높은순"},
+  {k:"sale_asc", label:"매매가 낮은순"},
+  {k:"sale_desc",label:"매매가 높은순"},
   {k:"dep_asc", label:"보증금 낮은순"},
   {k:"dep_desc",label:"보증금 높은순"},
+  {k:"rent_asc", label:"월세 낮은순"},
+  {k:"rent_desc",label:"월세 높은순"},
+  {k:"mgmt_asc", label:"관리비 낮은순"},
+  {k:"mgmt_desc",label:"관리비 높은순"},
+  {k:"prem_asc", label:"권리금 낮은순"},
+  {k:"prem_desc",label:"권리금 높은순"},
 ];
 
 const state = {
@@ -388,21 +398,35 @@ function filtered(){
     if(state.premMax!=null && (pm==null||pm>state.premMax)) return false;
     if(state.q){
       const q=state.q.toLowerCase();
-      const hay=`${d.bldg} ${d.addr} ${d.id} ${d.dong} ${d.sigungu}`.toLowerCase();
+      const hay=`${d.bldg} ${d.addr} ${d.id} ${d.naver} ${d.dong} ${d.sigungu}`.toLowerCase();
       if(!hay.includes(q)) return false;
     }
     return true;
   });
   const s=state.sort;
   const uu = x => (x.unit==="-"||x.unit==null)?Infinity:x.unit;
+  // 값 없으면(null/"-"/0아님) 항상 뒤로 가게: asc는 +Inf, desc는 -Inf
+  const gv = (x,key,dir) => {
+    const v = x[key];
+    if(v==null || v==="" || v==="-" || isNaN(+v)) return dir==="asc"?Infinity:-Infinity;
+    return +v;
+  };
   r.sort((a,b)=>{
     if(s==="id_asc")  return String(a.id||"").localeCompare(String(b.id||""), undefined, {numeric:true});
     if(s==="py_desc") return b.pyeong-a.pyeong;
     if(s==="py_asc")  return a.pyeong-b.pyeong;
     if(s==="unit_asc")return uu(a)-uu(b);
     if(s==="unit_desc")return uu(b)-uu(a);
+    if(s==="sale_asc") return gv(a,"sale","asc")-gv(b,"sale","asc");
+    if(s==="sale_desc")return gv(b,"sale","desc")-gv(a,"sale","desc");
     if(s==="dep_asc") return a.deposit-b.deposit;
     if(s==="dep_desc")return b.deposit-a.deposit;
+    if(s==="rent_asc") return gv(a,"rent","asc")-gv(b,"rent","asc");
+    if(s==="rent_desc")return gv(b,"rent","desc")-gv(a,"rent","desc");
+    if(s==="mgmt_asc") return gv(a,"mgmt","asc")-gv(b,"mgmt","asc");
+    if(s==="mgmt_desc")return gv(b,"mgmt","desc")-gv(a,"mgmt","desc");
+    if(s==="prem_asc") return gv(a,"premium","asc")-gv(b,"premium","asc");
+    if(s==="prem_desc")return gv(b,"premium","desc")-gv(a,"premium","desc");
     return 0;
   });
   return r;
@@ -425,6 +449,7 @@ function render(){
         <span class="tag t-deal ${d.deal}">${d.deal}</span>
         ${isClient ? '' : `<span class="own ${ownClass(d.own)}">${d.own}</span><span class="id">${d.id}</span>`}
       </div>
+      ${d.photo ? `<div class="thumb"><img src="${d.photo}" loading="lazy" referrerpolicy="no-referrer" alt="" onerror="this.parentNode.style.display='none'"></div>` : ""}
       <div class="bldg">${d.bldg}</div>
       <div class="addr">${d.addr}</div>
       <div class="price tnum">${priceLine(d)}</div>
@@ -445,10 +470,22 @@ function render(){
 /* ---- 타입 칩 ---- */
 const tc=document.getElementById("typechips");
 tc.innerHTML=TYPES.map(t=>`<button class="chip ${t===state.type?'on':''}" data-t="${t}">${t}</button>`).join("");
+function applyChipStyles(){
+  [...tc.children].forEach(c=>{
+    const t=c.dataset.t, on=(t===state.type);
+    c.classList.toggle("on", on);
+    if(on && t!=="전체" && TYPE_COLOR[t]){
+      c.style.background=TYPE_COLOR[t][1]; c.style.color="#fff"; c.style.borderColor=TYPE_COLOR[t][1];
+    } else {
+      c.style.background=""; c.style.color=""; c.style.borderColor="";
+    }
+  });
+}
+applyChipStyles();
 tc.addEventListener("click",e=>{
   const btn=e.target.closest(".chip"); if(!btn)return;
   state.type=btn.dataset.t;
-  [...tc.children].forEach(c=>c.classList.toggle("on",c.dataset.t===state.type));
+  applyChipStyles();
   render();
 });
 
