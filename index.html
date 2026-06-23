@@ -338,11 +338,23 @@ function fnum(v,dec){ if(v==null||v==="-"||v===""||isNaN(+v)) return v; return (
 function extrasLine(d){
   const bits=[];
   const isNA=v=>(v==null || v==="" || v==="-");
+  // 권리금/관리비: 0이면 "없음", 빈칸이면 숨김
   const cell=(label,v)=>{
-    if(isNA(v)) return null;                       // 값 자체가 없으면(해당없음) 숨김
-    const n=Number(v);
+    if(isNA(v)) return null;
+    const n=Number(v); if(isNaN(n)) return null;
     return `<span class="ex"><span class="ek">${label}</span>${n>0?won(v):"없음"}</span>`;
   };
+  // 보증/월세: 값이 0보다 클 때만 (매매 부가용)
+  const pos=(label,v)=>{
+    if(isNA(v)) return null;
+    const n=Number(v); if(isNaN(n)||n<=0) return null;
+    return `<span class="ex"><span class="ek">${label}</span>${won(v)}</span>`;
+  };
+  // 매매인데 임대(보증/월세) 정보가 있으면 부가로 표시 (수익형 매매 등)
+  if(d.deal==="매매"){
+    const dep=pos("보증",d.deposit); if(dep) bits.push(dep);
+    const rt =pos("월",d.rent);      if(rt)  bits.push(rt);
+  }
   const p=cell("권리금",d.premium); if(p) bits.push(p);
   const m=cell("관리비",d.mgmt);    if(m) bits.push(m);
   return bits.length ? `<div class="extras tnum">${bits.join("")}</div>` : "";
