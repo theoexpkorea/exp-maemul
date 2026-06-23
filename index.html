@@ -171,9 +171,76 @@
     cursor:pointer; text-align:left; font-family:inherit}
   .sortmenu button + button{border-top:1px solid var(--line-2)}
   .sortmenu button.on{color:var(--accent)}
+
+  /* ---- 비밀번호 화면 ---- */
+  #lockScreen{
+    position:fixed; inset:0; z-index:999;
+    background:var(--bg);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:32px 24px;
+    padding-top:calc(env(safe-area-inset-top) + 32px);
+  }
+  #lockScreen .lock-logo{
+    font-size:28px; font-weight:800; letter-spacing:-.04em;
+    margin-bottom:6px; color:var(--ink);
+  }
+  #lockScreen .lock-logo .o{color:var(--accent)}
+  #lockScreen .lock-sub{
+    font-size:13px; color:var(--muted); font-weight:600;
+    margin-bottom:40px;
+  }
+  #lockScreen .lock-box{
+    width:100%; max-width:320px;
+    background:var(--surface); border-radius:18px;
+    padding:28px 24px; box-shadow:var(--shadow);
+    border:1px solid var(--line);
+  }
+  #lockScreen .lock-title{
+    font-size:15px; font-weight:800; color:var(--ink);
+    margin-bottom:16px; text-align:center;
+  }
+  #lockScreen .lock-input{
+    width:100%; height:52px;
+    border:1px solid var(--line); border-radius:12px;
+    background:var(--bg); padding:0 16px;
+    font-size:20px; font-family:inherit;
+    text-align:center; letter-spacing:6px;
+    outline:0; color:var(--ink);
+    font-variant-numeric:tabular-nums;
+    margin-bottom:12px;
+  }
+  #lockScreen .lock-input:focus{border-color:var(--accent); background:#fff}
+  #lockScreen .lock-btn{
+    width:100%; height:52px; border:0; border-radius:13px;
+    background:var(--ink); color:#fff;
+    font-size:15.5px; font-weight:800; cursor:pointer;
+    font-family:inherit; transition:.12s;
+  }
+  #lockScreen .lock-btn:active{opacity:.85}
+  #lockScreen .lock-err{
+    font-size:13px; font-weight:700; color:#E03A3A;
+    text-align:center; margin-top:10px;
+    min-height:20px;
+  }
 </style>
 </head>
 <body>
+
+<!-- 비밀번호 잠금 화면 -->
+<div id="lockScreen">
+  <div class="lock-logo">the<span class="o">o</span></div>
+  <div class="lock-sub">내부 관리 시스템</div>
+  <div class="lock-box">
+    <div class="lock-title">🔒 비밀번호를 입력하세요</div>
+    <input id="lockInput" class="lock-input" type="password"
+      inputmode="numeric" maxlength="8" placeholder="••••"
+      autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="lock-btn" id="lockBtn">확인</button>
+    <div class="lock-err" id="lockErr"></div>
+  </div>
+</div>
+
 <header>
   <div class="head-row">
     <div class="brand">
@@ -287,7 +354,11 @@ const CONFIG = {
   // ↓ Apps Script 배포 후 나온 .../exec 주소를 여기 붙여넣으면 라이브 전환.
   //   null로 두면 아래 박힌 데이터 사용(오프라인 폴백).
   DATA_URL:"https://script.google.com/macros/s/AKfycbyAm0Rg1UpdvE62YEvc_0ex2UO9wEG-Jk7QsSOP8eKFZzILH8NKWSsh2NSJvS_tHDaS/exec",
-  TITLE:null
+  TITLE:null,
+  // ↓ 비밀번호: 여기서 직접 바꾸거나, PASS_URL에 Apps Script 주소 넣으면 시트에서 관리 가능
+  //   PASS_URL이 있으면 시트 비번 우선, 없으면 PASS 사용
+  PASS:"1234",
+  PASS_URL:null   // 예: "https://script.google.com/.../exec?mode=pass"
 };
 
 /* ===== 데이터: 엑셀 매물장 필터뷰에서 추출 (V1.84) ===== */
@@ -620,6 +691,54 @@ async function boot(){
   rebuildSG();
   render();
 }
+/* ---- 비밀번호 잠금 ---- */
+(function(){
+  const lockScreen = document.getElementById("lockScreen");
+  const lockInput  = document.getElementById("lockInput");
+  const lockBtn    = document.getElementById("lockBtn");
+  const lockErr    = document.getElementById("lockErr");
+
+  let correctPass = CONFIG.PASS;
+
+  function unlock(){
+    lockScreen.style.display = "none";
+  }
+
+  function tryUnlock(){
+    const entered = lockInput.value.trim();
+    if(!entered){ lockErr.textContent = "비밀번호를 입력해 주세요"; return; }
+    if(entered === correctPass){
+      unlock();
+    } else {
+      lockErr.textContent = "비밀번호가 틀렸습니다";
+      lockInput.value = "";
+      lockInput.focus();
+      // 흔들기 효과
+      lockInput.style.borderColor = "#E03A3A";
+      setTimeout(()=>{ lockInput.style.borderColor = ""; }, 800);
+    }
+  }
+
+  lockBtn.addEventListener("click", tryUnlock);
+  lockInput.addEventListener("keydown", e=>{ if(e.key==="Enter") tryUnlock(); });
+  lockInput.focus();
+
+  // PASS_URL 있으면 시트에서 비번 가져오기
+  if(CONFIG.PASS_URL){
+    var cb = "__pass_cb_" + Date.now();
+    var s  = document.createElement("script");
+    window[cb] = function(data){
+      try{ delete window[cb]; }catch(e){}
+      if(s.parentNode) s.parentNode.removeChild(s);
+      if(data && data.pass) correctPass = String(data.pass);
+    };
+    s.onerror = function(){ try{delete window[cb];}catch(e){} if(s.parentNode) s.parentNode.removeChild(s); };
+    var sep = CONFIG.PASS_URL.indexOf("?")>=0 ? "&" : "?";
+    s.src = CONFIG.PASS_URL + sep + "callback=" + cb;
+    document.head.appendChild(s);
+  }
+})();
+
 boot();
 </script>
 </body>
