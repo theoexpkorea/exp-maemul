@@ -351,14 +351,11 @@
    ======================================================== */
 const CONFIG = {
   MODE:"internal",
-  // ↓ Apps Script 배포 후 나온 .../exec 주소를 여기 붙여넣으면 라이브 전환.
-  //   null로 두면 아래 박힌 데이터 사용(오프라인 폴백).
-  DATA_URL:"https://script.google.com/macros/s/AKfycbyAm0Rg1UpdvE62YEvc_0ex2UO9wEG-Jk7QsSOP8eKFZzILH8NKWSsh2NSJvS_tHDaS/exec",
-  TITLE:null,
-  // ↓ 비밀번호: 여기서 직접 바꾸거나, PASS_URL에 Apps Script 주소 넣으면 시트에서 관리 가능
-  //   PASS_URL이 있으면 시트 비번 우선, 없으면 PASS 사용
-  PASS:"7381",
-  PASS_URL:null   // 예: "https://script.google.com/.../exec?mode=pass"
+  // ↓ Apps Script 배포 후 나온 .../exec 주소
+  //   비번도 여기서 같이 가져옴 (?mode=pass)
+  DATA_URL:"https://script.google.com/macros/s/AKfycbyzgJKWxiFf2mDXV2mGAw46DszWqjQmh3p01Kv1yyf-dovJ3qiCOhBH7wgiSgu586YS/exec",
+  TITLE:null
+  // ※ 비번은 구글 시트 [비번] 탭 A1셀에서 관리
 };
 
 /* ===== 데이터: 엑셀 매물장 필터뷰에서 추출 (V1.84) ===== */
@@ -691,14 +688,15 @@ async function boot(){
   rebuildSG();
   render();
 }
-/* ---- 비밀번호 잠금 ---- */
+/* ---- 비밀번호 잠금 (구글 시트 연동) ---- */
 (function(){
   const lockScreen = document.getElementById("lockScreen");
   const lockInput  = document.getElementById("lockInput");
   const lockBtn    = document.getElementById("lockBtn");
   const lockErr    = document.getElementById("lockErr");
 
-  let correctPass = CONFIG.PASS;
+  let correctPass  = null;   // 시트에서 받아올 때까지 null
+  let passLoaded   = false;
 
   function unlock(){
     lockScreen.style.display = "none";
@@ -707,13 +705,13 @@ async function boot(){
   function tryUnlock(){
     const entered = lockInput.value.trim();
     if(!entered){ lockErr.textContent = "비밀번호를 입력해 주세요"; return; }
+    if(!passLoaded){ lockErr.textContent = "잠시 후 다시 시도해 주세요"; return; }
     if(entered === correctPass){
       unlock();
     } else {
       lockErr.textContent = "비밀번호가 틀렸습니다";
       lockInput.value = "";
       lockInput.focus();
-      // 흔들기 효과
       lockInput.style.borderColor = "#E03A3A";
       setTimeout(()=>{ lockInput.style.borderColor = ""; }, 800);
     }
@@ -721,22 +719,34 @@ async function boot(){
 
   lockBtn.addEventListener("click", tryUnlock);
   lockInput.addEventListener("keydown", e=>{ if(e.key==="Enter") tryUnlock(); });
-  lockInput.focus();
 
-  // PASS_URL 있으면 시트에서 비번 가져오기
-  if(CONFIG.PASS_URL){
-    var cb = "__pass_cb_" + Date.now();
-    var s  = document.createElement("script");
+  // 구글 시트에서 비번 가져오기 (JSONP)
+  function loadPass(){
+    const passUrl = CONFIG.DATA_URL;  // 같은 Apps Script URL 사용
+    if(!passUrl){ passLoaded=true; correctPass=""; return; }
+    const cb = "__pass_cb_" + Date.now();
+    const s  = document.createElement("script");
     window[cb] = function(data){
       try{ delete window[cb]; }catch(e){}
       if(s.parentNode) s.parentNode.removeChild(s);
-      if(data && data.pass) correctPass = String(data.pass);
+      if(data && data.pass !== undefined){
+        correctPass = String(data.pass).trim();
+        passLoaded  = true;
+        lockInput.focus();
+      }
     };
-    s.onerror = function(){ try{delete window[cb];}catch(e){} if(s.parentNode) s.parentNode.removeChild(s); };
-    var sep = CONFIG.PASS_URL.indexOf("?")>=0 ? "&" : "?";
-    s.src = CONFIG.PASS_URL + sep + "callback=" + cb;
+    s.onerror = function(){
+      try{ delete window[cb]; }catch(e){}
+      if(s.parentNode) s.parentNode.removeChild(s);
+      // 로드 실패 시 fallback 없음 → 접근 차단 유지
+      lockErr.textContent = "서버 연결 실패. 새로고침 해주세요";
+    };
+    const sep = passUrl.indexOf("?")>=0 ? "&" : "?";
+    s.src = passUrl + sep + "mode=pass&callback=" + cb;
     document.head.appendChild(s);
   }
+
+  loadPass();
 })();
 
 boot();
