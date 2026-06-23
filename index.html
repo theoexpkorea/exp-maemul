@@ -27,6 +27,14 @@
   }
   .tnum{font-variant-numeric:tabular-nums}
 
+  .map-icon-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border-radius:9px;
+    background:var(--accent-soft); border:1px solid var(--accent);
+    color:var(--accent); cursor:pointer; text-decoration:none; flex:none;
+  }
+  .map-icon-btn:active{opacity:.8}
+
   /* Header */
   header{
     position:sticky; top:0; z-index:30; background:var(--surface);
@@ -247,7 +255,14 @@
       <span class="logo">the<span class="o">o</span></span>
       <span class="by" id="appBy">매물 필터뷰</span>
     </div>
-    <div class="count"><b id="cnt">0</b>건</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <a class="map-icon-btn" href="https://www.google.com/maps/d/u/0/edit?hl=ko&mid=1cRN6AKabH4M2gIDOzLU_kH2HsHhbNK0&ll=37.448006501485736%2C126.87623830097101&z=11" target="_blank" title="통합 매물 지도">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+        </svg>
+      </a>
+      <div class="count"><b id="cnt">0</b>건</div>
+    </div>
   </div>
   <div class="search">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
