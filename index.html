@@ -91,6 +91,7 @@
   .tag.t-deal.매매{background:var(--sale-bg); color:var(--sale)}
   .tag.t-deal.전세{background:var(--jeonse-bg); color:var(--jeonse)}
   .tag.t-deal.월세{background:var(--wolse-bg); color:var(--wolse)}
+  .tag.t-deal.단기임대{background:#E9EDF5; color:#5A6B86}
   .id{font-size:12px; font-weight:700; color:#aab0ba}
   .idbox{margin-left:auto; text-align:right; line-height:1.2}
   .idbox .nv{display:block; font-size:10.5px; font-weight:600; color:#b8bdc6; margin-top:1px}
@@ -614,7 +615,7 @@ async function boot(){
       if(Array.isArray(j) && j.length) DATA = j;   // 라이브 데이터로 교체
     }catch(e){ console.error("라이브 데이터 로드 실패 → 내장 데이터 사용:", e); }
   }
-  chipset("dealOpts", ["매매","전세","월세"], state.deals);
+  chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
   chipset("sidoOpts", uniq("sido"), state.sidos);
   rebuildSG();
   render();
