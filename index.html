@@ -675,10 +675,9 @@ function applyMode(){
   const isClient = CONFIG.MODE==="client";
   document.getElementById("appBy").textContent = CONFIG.TITLE || (isClient ? "추천 매물 · eXp" : "매물 필터뷰 · eXp");
 }
-function loadLive(base){
-  // Apps Script 웹앱은 CORS 이슈가 있어 JSONP(script 태그)로 읽음
+function loadLiveOnce(base, timeoutMs){
   return new Promise(function(resolve, reject){
-    var cb = "__maemul_cb_" + Date.now();
+    var cb = "__maemul_cb_" + Date.now() + "_" + Math.floor(Math.random()*100000);
     var s = document.createElement("script");
     var done = false;
     window[cb] = function(data){ done=true; cleanup(); resolve(data); };
@@ -687,8 +686,17 @@ function loadLive(base){
     var sep = base.indexOf("?")>=0 ? "&" : "?";
     s.src = base + sep + "callback=" + cb + (CONFIG.MODE==="client" ? "&mode=client" : "");
     document.head.appendChild(s);
-    setTimeout(function(){ if(!done){ cleanup(); reject(new Error("timeout")); } }, 12000);
+    setTimeout(function(){ if(!done){ cleanup(); reject(new Error("timeout")); } }, timeoutMs);
   });
+}
+// 타임아웃 20초로 연장 + 실패 시 1회 자동 재시도
+async function loadLive(base){
+  try{
+    return await loadLiveOnce(base, 20000);
+  }catch(e){
+    await new Promise(r=>setTimeout(r, 800));
+    return await loadLiveOnce(base, 20000);
+  }
 }
 async function boot(){
   applyMode();
@@ -735,30 +743,59 @@ async function boot(){
   lockBtn.addEventListener("click", tryUnlock);
   lockInput.addEventListener("keydown", e=>{ if(e.key==="Enter") tryUnlock(); });
 
-  // 구글 시트에서 비번 가져오기 (JSONP)
-  function loadPass(){
-    const passUrl = CONFIG.DATA_URL;  // 같은 Apps Script URL 사용
+  // 구글 시트에서 비번 가져오기 (JSONP, 재시도 포함)
+  function loadPassOnce(passUrl, timeoutMs){
+    return new Promise(function(resolve, reject){
+      const cb = "__pass_cb_" + Date.now() + "_" + Math.floor(Math.random()*100000);
+      const s  = document.createElement("script");
+      let done = false;
+      window[cb] = function(data){
+        done = true;
+        try{ delete window[cb]; }catch(e){}
+        if(s.parentNode) s.parentNode.removeChild(s);
+        resolve(data);
+      };
+      s.onerror = function(){
+        if(!done){
+          try{ delete window[cb]; }catch(e){}
+          if(s.parentNode) s.parentNode.removeChild(s);
+          reject(new Error("load fail"));
+        }
+      };
+      const sep = passUrl.indexOf("?")>=0 ? "&" : "?";
+      s.src = passUrl + sep + "mode=pass&callback=" + cb;
+      document.head.appendChild(s);
+      setTimeout(function(){
+        if(!done){
+          try{ delete window[cb]; }catch(e){}
+          if(s.parentNode) s.parentNode.removeChild(s);
+          reject(new Error("timeout"));
+        }
+      }, timeoutMs);
+    });
+  }
+
+  async function loadPass(){
+    const passUrl = CONFIG.DATA_URL;
     if(!passUrl){ passLoaded=true; correctPass=""; return; }
-    const cb = "__pass_cb_" + Date.now();
-    const s  = document.createElement("script");
-    window[cb] = function(data){
-      try{ delete window[cb]; }catch(e){}
-      if(s.parentNode) s.parentNode.removeChild(s);
+    try{
+      let data;
+      try{
+        data = await loadPassOnce(passUrl, 20000);
+      }catch(e){
+        lockErr.textContent = "연결 중... 다시 시도합니다";
+        await new Promise(r=>setTimeout(r, 800));
+        data = await loadPassOnce(passUrl, 20000);
+      }
       if(data && data.pass !== undefined){
         correctPass = String(data.pass).trim();
         passLoaded  = true;
+        lockErr.textContent = "";
         lockInput.focus();
       }
-    };
-    s.onerror = function(){
-      try{ delete window[cb]; }catch(e){}
-      if(s.parentNode) s.parentNode.removeChild(s);
-      // 로드 실패 시 fallback 없음 → 접근 차단 유지
+    }catch(e){
       lockErr.textContent = "서버 연결 실패. 새로고침 해주세요";
-    };
-    const sep = passUrl.indexOf("?")>=0 ? "&" : "?";
-    s.src = passUrl + sep + "mode=pass&callback=" + cb;
-    document.head.appendChild(s);
+    }
   }
 
   loadPass();
