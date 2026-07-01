@@ -129,6 +129,17 @@
   .meta .k{font-size:10.5px; color:#9aa1ab; font-weight:700; letter-spacing:.01em; margin-bottom:2px}
   .meta .v{font-size:13.5px; font-weight:800; letter-spacing:-.01em}
 
+  /* 서류 버튼 */
+  .doc-btns{display:flex; gap:7px; margin-top:10px; clear:both}
+  .doc-btn{
+    display:inline-flex; align-items:center; gap:5px;
+    padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700;
+    text-decoration:none; border:1.5px solid var(--line);
+    color:var(--muted); background:var(--surface);
+    transition:all .15s;
+  }
+  .doc-btn:active{opacity:.75}
+
   .empty{text-align:center; padding:64px 24px; color:var(--muted)}
   .empty .em-t{font-size:15px; font-weight:700; color:var(--ink); margin-bottom:6px}
   .empty .em-s{font-size:13px}
@@ -368,7 +379,7 @@ const CONFIG = {
   MODE:"internal",
   // ↓ Apps Script 배포 후 나온 .../exec 주소
   //   비번도 여기서 같이 가져옴 (?mode=pass)
-  DATA_URL:"https://script.google.com/macros/s/AKfycbxzC5M2zFC4lfjer8Wjd3ZTY2KMTYJbdgD0_9tMsIhtSwLoQEGIchFl0ZTHEIIsvIK8/exec",
+  DATA_URL:"https://script.google.com/macros/s/AKfycbzDk9DYfD7okIfp4_MH5asXVxgroC9qlYGL08yHL_0dXPDfWElTdKglhQ-BQxWVoiil/exec",
   TITLE:null
   // ※ 비번은 구글 시트 [비번] 탭 A1셀에서 관리
 };
@@ -563,6 +574,10 @@ function render(){
         <div class="m"><div class="k">전용 ㎡</div><div class="v tnum">${fnum(d.m2,1)}㎡</div></div>
         <div class="m"><div class="k">평단가</div><div class="v tnum">${unitTxt(d.unit)}</div></div>
       </div>
+      ${(d.bdoc||d.rdoc) ? `<div class="doc-btns">
+        ${d.bdoc ? `<a class="doc-btn" href="${d.bdoc}" target="_blank">📄 건축물대장</a>` : ''}
+        ${d.rdoc ? `<a class="doc-btn" href="${d.rdoc}" target="_blank">📋 등기부등본</a>` : ''}
+      </div>` : ''}
     </div>`).join("");
   // 필터 뱃지
   let active = state.deals.size+state.sidos.size+state.sgs.size +
