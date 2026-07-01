@@ -182,8 +182,8 @@
 
   /* sort menu */
   .sortmenu{position:fixed; z-index:50; background:var(--surface); border:1px solid var(--line);
-    border-radius:13px; box-shadow:0 12px 30px rgba(20,24,32,.16); overflow:hidden; display:none;
-    min-width:168px}
+    border-radius:13px; box-shadow:0 12px 30px rgba(20,24,32,.16); overflow-y:auto; display:none;
+    min-width:160px; max-width:calc(100vw - 32px); max-height:60vh}
   .sortmenu.on{display:block}
   .sortmenu button{display:flex; align-items:center; justify-content:space-between; width:100%;
     background:0; border:0; padding:13px 15px; font-size:14px; font-weight:700; color:var(--ink);
@@ -672,7 +672,9 @@ sortmenu.innerHTML=SORTS.map(s=>`<button data-k="${s.k}" class="${s.k===state.so
 function openSort(){
   const btn=document.getElementById("openSort").getBoundingClientRect();
   sortmenu.style.top=(btn.bottom+6)+"px";
-  sortmenu.style.right=(window.innerWidth-btn.right)+"px";
+  const rightOffset = window.innerWidth - btn.right;
+  sortmenu.style.right = Math.max(rightOffset, 8)+"px";
+  sortmenu.style.left = "auto";
   sortmenu.classList.add("on"); scrim.classList.add("on");
 }
 function closeSort(){ sortmenu.classList.remove("on"); if(!sheet.classList.contains("on")) scrim.classList.remove("on"); }
