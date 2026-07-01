@@ -263,7 +263,7 @@
 <header>
   <div class="head-row">
     <div class="brand">
-      <span class="logo" onclick="state.type='전체'; state.q=''; document.getElementById('q').value=''; applyChipStyles(); render(filter());">the<span class="o">o</span></span>
+      <span class="logo" onclick="event.preventDefault(); state.type='전체'; state.q=''; document.getElementById('q').value=''; applyChipStyles(); render(filter());">the<span class="o">o</span></span>
       <span class="by" id="appBy">매물 필터뷰</span>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
