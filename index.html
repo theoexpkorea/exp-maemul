@@ -728,14 +728,39 @@ function loadLiveOnce(base, timeoutMs){
     setTimeout(function(){ if(!done){ cleanup(); reject(new Error("timeout")); } }, timeoutMs);
   });
 }
-// 타임아웃 20초로 연장 + 실패 시 1회 자동 재시도
+// 타임아웃 30초 + 실패 시 최대 2회 재시도
 async function loadLive(base){
-  try{
-    return await loadLiveOnce(base, 30000);
-  }catch(e){
-    await new Promise(r=>setTimeout(r, 800));
-    return await loadLiveOnce(base, 30000);
+  for(let attempt=0; attempt<3; attempt++){
+    try{
+      return await loadLiveOnce(base, 30000);
+    }catch(e){
+      if(attempt<2) await new Promise(r=>setTimeout(r, 800*(attempt+1)));
+      else throw e;
+    }
   }
+}
+function showStaleBanner(){
+  let b = document.getElementById("staleBanner");
+  if(b) return;
+  b = document.createElement("div");
+  b.id = "staleBanner";
+  b.style.cssText = "position:sticky;top:0;z-index:50;background:#FEF3C7;color:#92400E;font-size:13px;font-weight:600;padding:9px 14px;text-align:center;cursor:pointer;";
+  b.textContent = "⚠️ 최신 데이터를 불러오지 못했습니다. 저장된 데이터 표시 중 — 탭하여 다시 시도";
+  b.onclick = async function(){
+    b.textContent = "다시 불러오는 중...";
+    try{
+      const j = await loadLive(CONFIG.DATA_URL);
+      if(Array.isArray(j) && j.length){
+        DATA = j;
+        b.remove();
+        rebuildSG();
+        render();
+      }
+    }catch(e){
+      b.textContent = "⚠️ 다시 실패했습니다. 잠시 후 다시 탭해 주세요";
+    }
+  };
+  document.body.insertBefore(b, document.body.firstChild);
 }
 /* ===================== 사진·서류 캐시 초기화 (원클릭) ===================== */
 async function clearDocCache(){
@@ -760,7 +785,10 @@ async function boot(){
     try{
       const j = await loadLive(CONFIG.DATA_URL);
       if(Array.isArray(j) && j.length) DATA = j;   // 라이브 데이터로 교체
-    }catch(e){ console.error("라이브 데이터 로드 실패 → 내장 데이터 사용:", e); }
+    }catch(e){
+      console.error("라이브 데이터 로드 실패 → 내장 데이터 사용:", e);
+      showStaleBanner();
+    }
   }
   chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
   chipset("sidoOpts", uniq("sido"), state.sidos);
