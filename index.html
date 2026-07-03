@@ -776,6 +776,18 @@ async function boot(){
 
   let correctPass  = null;   // 시트에서 받아올 때까지 null
   let passLoaded   = false;
+  let passLoading  = false;
+
+  const PASS_CACHE_KEY = "theo_internal_pass_cache";
+
+  // 저장된 비번이 있으면 네트워크 기다릴 필요 없이 즉시 사용 가능하게
+  try{
+    const cached = localStorage.getItem(PASS_CACHE_KEY);
+    if(cached){
+      correctPass = cached;
+      passLoaded = true;
+    }
+  }catch(e){}
 
   function unlock(){
     lockScreen.style.display = "none";
@@ -784,7 +796,13 @@ async function boot(){
   function tryUnlock(){
     const entered = lockInput.value.trim();
     if(!entered){ lockErr.textContent = "비밀번호를 입력해 주세요"; return; }
-    if(!passLoaded){ lockErr.textContent = "잠시 후 다시 시도해 주세요"; return; }
+    if(!passLoaded){
+      if(!passLoading){
+        lockErr.textContent = "서버에 연결하는 중...";
+        loadPass();
+      }
+      return;
+    }
     if(entered === correctPass){
       unlock();
     } else {
@@ -832,25 +850,31 @@ async function boot(){
   }
 
   async function loadPass(){
+    if(passLoading) return;
+    passLoading = true;
+    const hadCache = passLoaded;   // 캐시로 이미 언락 가능한 상태였는지
     const passUrl = CONFIG.DATA_URL;
-    if(!passUrl){ passLoaded=true; correctPass=""; return; }
+    if(!passUrl){ passLoaded=true; passLoading=false; correctPass=""; return; }
     try{
       let data;
       try{
-        data = await loadPassOnce(passUrl, 30000);
+        data = await loadPassOnce(passUrl, 15000);
       }catch(e){
-        lockErr.textContent = "연결 중... 다시 시도합니다";
+        if(!hadCache) lockErr.textContent = "연결 중... 다시 시도합니다";
         await new Promise(r=>setTimeout(r, 800));
-        data = await loadPassOnce(passUrl, 30000);
+        data = await loadPassOnce(passUrl, 15000);
       }
       if(data && data.pass !== undefined){
         correctPass = String(data.pass).trim();
         passLoaded  = true;
-        lockErr.textContent = "";
-        lockInput.focus();
+        if(!hadCache){ lockErr.textContent = ""; lockInput.focus(); }
+        try{ localStorage.setItem(PASS_CACHE_KEY, correctPass); }catch(e){}
       }
     }catch(e){
-      lockErr.textContent = "서버 연결 실패. 새로고침 해주세요";
+      // 캐시된 비번으로 이미 언락 가능한 상태면 에러를 굳이 보여주지 않음
+      if(!hadCache) lockErr.textContent = "서버 연결이 원활하지 않습니다. 확인 버튼을 다시 눌러주세요";
+    }finally{
+      passLoading = false;
     }
   }
 
