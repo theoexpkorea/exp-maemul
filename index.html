@@ -606,10 +606,11 @@ function render(){
         <div class="m"><div class="k">전용 ㎡</div><div class="v tnum">${fnum(d.m2,1)}㎡</div></div>
         <div class="m"><div class="k">평단가</div><div class="v tnum">${unitTxt(d.unit)}</div></div>
       </div>
-      ${(d.bdoc||d.rdoc) ? `<div class="doc-btns">
+      <div class="doc-btns">
         ${d.bdoc ? `<a class="doc-btn" href="${d.bdoc}" target="_blank">📄 건축물대장</a>` : ''}
         ${d.rdoc ? `<a class="doc-btn" href="${d.rdoc}" target="_blank">📋 등기부등본</a>` : ''}
-      </div>` : ''}
+        ${d.addr ? `<a class="doc-btn" href="https://map.naver.com/v5/search/${encodeURIComponent(d.addr)}" target="_blank">🗺️ 네이버지도</a>` : ''}
+      </div>
     </div>`).join("");
   // 필터 뱃지
   let active = state.deals.size+state.sidos.size+state.sgs.size +
