@@ -462,6 +462,9 @@ function priceLine(d){
 }
 function unitTxt(u){ return (u==null||u==="-") ? "-" : Math.round(u).toLocaleString()+"원"; }
 function fnum(v,dec){ if(v==null||v==="-"||v===""||isNaN(+v)) return v; return (+(+v).toFixed(dec)).toLocaleString(); }
+function naverMapQuery(d){
+  return d.addr || d.bldg || "";
+}
 function extrasLine(d){
   const bits=[];
   const isNA=v=>(v==null || v==="" || v==="-");
@@ -609,10 +612,7 @@ function render(){
       <div class="doc-btns">
         ${d.bdoc ? `<a class="doc-btn" href="${d.bdoc}" target="_blank">📄 건축물대장</a>` : ''}
         ${d.rdoc ? `<a class="doc-btn" href="${d.rdoc}" target="_blank">📋 등기부등본</a>` : ''}
-        ${(d.addr||d.bldg) ? (function(){
-          var q = [d.addr, d.bldg].filter(Boolean).join(" ");
-          return `<a class="doc-btn" href="https://map.naver.com/p/search/${encodeURIComponent(q)}" target="_blank">🗺️ 네이버지도</a>`;
-        })() : ''}
+        ${(d.addr||d.bldg) ? `<a class="doc-btn" href="https://map.naver.com/p/search/${encodeURIComponent(naverMapQuery(d))}" target="_blank">🗺️ 네이버지도</a>` : ''}
       </div>
     </div>`).join("");
   // 필터 뱃지
