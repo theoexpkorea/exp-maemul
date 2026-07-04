@@ -54,8 +54,7 @@
 
   /* Header */
   header{
-    position:sticky; top:0; z-index:30; background:var(--surface);
-    border-bottom:1px solid var(--line);
+    background:var(--surface); border-bottom:1px solid var(--line);
     padding:calc(env(safe-area-inset-top) + 12px) 16px 0;
   }
   .head-row{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
@@ -91,7 +90,8 @@
   .chip.on{background:var(--ink); color:#fff; border-color:var(--ink)}
 
   .toolbar{display:flex; align-items:center; justify-content:space-between; gap:10px;
-    padding:11px 16px; }
+    padding:11px 16px; position:sticky; top:0; z-index:30;
+    background:var(--surface); border-bottom:1px solid var(--line); }
   .toolbar .filters{
     display:inline-flex; align-items:center; gap:6px; background:var(--surface);
     border:1px solid var(--line); border-radius:9px; height:34px; padding:0 12px;
@@ -303,17 +303,17 @@
     <button class="clr" id="clr">×</button>
   </div>
   <div class="chips" id="typechips"></div>
-  <div class="toolbar">
-    <button class="filters" id="openFilters">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
-      필터 <span class="badge" id="fbadge" style="display:none">0</span>
-    </button>
-    <button class="sort" id="openSort">
-      <span id="sortLabel">매물번호순</span>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>
-    </button>
-  </div>
 </header>
+<div class="toolbar">
+  <button class="filters" id="openFilters">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+    필터 <span class="badge" id="fbadge" style="display:none">0</span>
+  </button>
+  <button class="sort" id="openSort">
+    <span id="sortLabel">매물번호순</span>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>
+  </button>
+</div>
 
 <main id="list"></main>
 
