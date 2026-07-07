@@ -858,18 +858,6 @@ async function loadCardPropertyLinks(){
 
 async function boot(){
   applyMode();
-  if(CONFIG.DATA_URL){
-    try{
-      const j = await loadLive(CONFIG.DATA_URL);
-      if(Array.isArray(j) && j.length){
-        DATA = j;   // 라이브 데이터로 교체
-        try{ localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(j)); }catch(e){}
-      }
-    }catch(e){
-      console.error("라이브 데이터 로드 실패 → 이전 데이터 유지:", e);
-      showStaleBanner();
-    }
-  }
   chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
   chipset("sidoOpts", uniq("sido"), state.sidos);
   rebuildSG();
@@ -887,7 +875,26 @@ async function boot(){
     }
   }catch(e){}
 
+  // 저장된(캐시) 데이터로 화면을 먼저 즉시 그려서 체감 로딩을 없앰
   render();
+
+  // 최신 데이터는 뒤에서 조용히 받아와 갱신
+  if(CONFIG.DATA_URL){
+    try{
+      const j = await loadLive(CONFIG.DATA_URL);
+      if(Array.isArray(j) && j.length){
+        DATA = j;   // 라이브 데이터로 교체
+        try{ localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(j)); }catch(e){}
+        chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
+        chipset("sidoOpts", uniq("sido"), state.sidos);
+        rebuildSG();
+        render();
+      }
+    }catch(e){
+      console.error("라이브 데이터 로드 실패 → 이전 데이터 유지:", e);
+      showStaleBanner();
+    }
+  }
 
   // 명함 데이터는 매물 목록 표시를 막지 않도록 별도로(비차단) 불러옴
   loadCardPropertyLinks();
