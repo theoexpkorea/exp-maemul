@@ -812,6 +812,11 @@ window.addEventListener("orientationchange", ()=>setTimeout(syncHeaderSpacer, 20
 // ---- 명함 앱 연동: 실제로 연결된 매물번호만 파악해서 "관련 명함" 버튼 정확히 표시 ----
 const CARD_SCANNER_API = 'https://script.google.com/macros/s/AKfycbyFPY9gJxEJm_Ny-qqEViYWJ6l1cGptVLto7BR_jyLWk3A2KoV-shtR6ldKod1SdllB/exec';
 let CARD_PROPERTY_SET = new Set();
+const CARD_LINKS_CACHE_KEY = "theo_card_links_cache";
+try {
+  const cachedLinks = localStorage.getItem(CARD_LINKS_CACHE_KEY);
+  if (cachedLinks) CARD_PROPERTY_SET = new Set(JSON.parse(cachedLinks));
+} catch (e) {}
 
 function jsonpFetchOnce(url, timeoutMs){
   return new Promise(function(resolve, reject){
@@ -849,6 +854,7 @@ async function loadCardPropertyLinks(){
           .forEach(pn => set.add(pn));
       });
       CARD_PROPERTY_SET = set;
+      try { localStorage.setItem(CARD_LINKS_CACHE_KEY, JSON.stringify(Array.from(set))); } catch (e) {}
       render(); // 버튼 표시 여부가 바뀌므로 다시 그림
     }
   }catch(e){
