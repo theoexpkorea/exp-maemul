@@ -813,7 +813,7 @@ window.addEventListener("orientationchange", ()=>setTimeout(syncHeaderSpacer, 20
 const CARD_SCANNER_API = 'https://script.google.com/macros/s/AKfycbyFPY9gJxEJm_Ny-qqEViYWJ6l1cGptVLto7BR_jyLWk3A2KoV-shtR6ldKod1SdllB/exec';
 let CARD_PROPERTY_SET = new Set();
 
-function jsonpFetch(url, timeoutMs){
+function jsonpFetchOnce(url, timeoutMs){
   return new Promise(function(resolve, reject){
     var cb = "__card_link_cb_" + Date.now() + "_" + Math.floor(Math.random()*100000);
     var s = document.createElement("script");
@@ -825,6 +825,17 @@ function jsonpFetch(url, timeoutMs){
     s.src = url + sep + "callback=" + cb;
     document.head.appendChild(s);
     setTimeout(function(){ if(!done){ cleanup(); reject(new Error("timeout")); } }, timeoutMs||8000);
+  });
+}
+
+// 명함스캔 서버(Apps Script) 예열 지연이나 모바일 네트워크 순간 끊김 대비: 실패 시 최대 2번 더 자동 재시도
+function jsonpFetch(url, timeoutMs, retries){
+  retries = retries===undefined ? 2 : retries;
+  return jsonpFetchOnce(url, timeoutMs).catch(function(err){
+    if (retries<=0) throw err;
+    return new Promise(function(resolve){ setTimeout(resolve, 700); }).then(function(){
+      return jsonpFetch(url, timeoutMs, retries-1);
+    });
   });
 }
 
