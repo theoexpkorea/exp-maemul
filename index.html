@@ -618,7 +618,7 @@ function render(){
         ${d.rdoc ? `<a class="doc-btn" href="${d.rdoc}" target="_blank">📋 등기부등본</a>` : ''}
         ${(d.addr||d.bldg) ? `<a class="doc-btn" href="https://map.naver.com/p/search/${encodeURIComponent(naverMapQuery(d))}" target="_blank">🗺️ 네이버지도</a>` : ''}
       </div>
-      ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim())) ? `<div class="doc-btns card-link-row"><a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련 명함</a></div>` : ''}
+      ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim())) ? `<div class="doc-btns card-link-row"><a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">👤 관련 명함</a></div>` : ''}
     </div>`).join("");
   // 필터 뱃지
   let active = state.deals.size+state.sidos.size+state.sgs.size +
@@ -830,9 +830,12 @@ async function loadCardPropertyLinks(){
   try{
     const data = await jsonpFetch(CARD_SCANNER_API + '?action=list', 8000);
     if(data && data.success && Array.isArray(data.cards)){
-      CARD_PROPERTY_SET = new Set(
-        data.cards.map(c => String(c.propertyNo || '').trim()).filter(Boolean)
-      );
+      const set = new Set();
+      data.cards.forEach(c => {
+        String(c.propertyNo || '').split(',').map(s => s.trim()).filter(Boolean)
+          .forEach(pn => set.add(pn));
+      });
+      CARD_PROPERTY_SET = set;
       render(); // 버튼 표시 여부가 바뀌므로 다시 그림
     }
   }catch(e){
