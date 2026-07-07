@@ -1,6 +1,6 @@
 {
-  "name": "eXp 매물 필터뷰",
-  "short_name": "매물뷰",
+  "name": "Filter View",
+  "short_name": "Filter View",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
