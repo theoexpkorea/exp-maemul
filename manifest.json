@@ -1,6 +1,6 @@
 {
   "name": "Filter View",
-  "short_name": "Filter View",
+  "short_name": "매물필터뷰",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
