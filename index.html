@@ -833,20 +833,23 @@ function jsonpFetchOnce(url, timeoutMs){
   });
 }
 
-// 명함스캔 서버(Apps Script) 예열 지연이나 모바일 네트워크 순간 끊김 대비: 실패 시 최대 2번 더 자동 재시도
-function jsonpFetch(url, timeoutMs, retries){
-  retries = retries===undefined ? 2 : retries;
+// 명함스캔 서버(Apps Script) 예열 지연이나 모바일 네트워크 순간 끊김 대비: 실패 시 최대 3번 더 자동 재시도 (총 4회)
+function jsonpFetch(url, timeoutMs, retries, attempt){
+  timeoutMs = timeoutMs===undefined ? 12000 : timeoutMs;
+  retries = retries===undefined ? 3 : retries;
+  attempt = attempt===undefined ? 0 : attempt;
   return jsonpFetchOnce(url, timeoutMs).catch(function(err){
     if (retries<=0) throw err;
-    return new Promise(function(resolve){ setTimeout(resolve, 700); }).then(function(){
-      return jsonpFetch(url, timeoutMs, retries-1);
+    var wait = 700 * (attempt + 1);
+    return new Promise(function(resolve){ setTimeout(resolve, wait); }).then(function(){
+      return jsonpFetch(url, timeoutMs, retries-1, attempt+1);
     });
   });
 }
 
 async function loadCardPropertyLinks(){
   try{
-    const data = await jsonpFetch(CARD_SCANNER_API + '?action=list', 8000);
+    const data = await jsonpFetch(CARD_SCANNER_API + '?action=list');
     if(data && data.success && Array.isArray(data.cards)){
       const set = new Set();
       data.cards.forEach(c => {
