@@ -270,7 +270,7 @@
 <!-- 비밀번호 잠금 화면 -->
 <div id="lockScreen">
   <div class="lock-logo">the<span class="o">o</span></div>
-  <div class="lock-sub">내부 관리 시스템</div>
+  <div class="lock-sub">매물 필터뷰 · eXp Korea</div>
   <div class="lock-box">
     <div class="lock-title">🔒 비밀번호를 입력하세요</div>
     <input id="lockInput" class="lock-input" type="password"
@@ -285,7 +285,7 @@
   <div class="head-row">
     <div class="brand">
       <span class="logo" onclick="event.preventDefault(); state.type='전체'; state.q=''; document.getElementById('q').value=''; applyChipStyles(); render();">the<span class="o">o</span></span>
-      <span class="by" id="appBy">매물 필터뷰</span>
+      <span class="by" id="appBy">매물 필터뷰 · eXp Korea</span>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <a class="map-icon-btn" href="https://www.google.com/maps/d/u/0/viewer?hl=ko&mid=1cRN6AKabH4M2gIDOzLU_kH2HsHhbNK0&ll=37.44840691226422%2C126.87623830097101&z=11" target="_blank" title="통합 매물 지도">
@@ -734,7 +734,7 @@ sortmenu.addEventListener("click",e=>{
 
 function applyMode(){
   const isClient = CONFIG.MODE==="client";
-  document.getElementById("appBy").textContent = CONFIG.TITLE || (isClient ? "추천 매물 · eXp" : "매물 필터뷰 · eXp");
+  document.getElementById("appBy").textContent = CONFIG.TITLE || (isClient ? "추천 매물 · eXp Korea" : "매물 필터뷰 · eXp Korea");
 }
 function loadLiveOnce(base, timeoutMs){
   return new Promise(function(resolve, reject){
