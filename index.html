@@ -268,7 +268,7 @@
 <!-- 비밀번호 잠금 화면 -->
 <div id="lockScreen">
   <div class="lock-logo">the<span class="o">o</span></div>
-  <div class="lock-sub">매물 필터뷰 · eXp Korea</div>
+  <div class="lock-sub">내부 관리 시스템</div>
   <div class="lock-box">
     <div class="lock-title">🔒 비밀번호를 입력하세요</div>
     <input id="lockInput" class="lock-input" type="password"
@@ -283,7 +283,7 @@
   <div class="head-row">
     <div class="brand">
       <span class="logo" onclick="event.preventDefault(); state.type='전체'; state.q=''; document.getElementById('q').value=''; applyChipStyles(); render();">the<span class="o">o</span></span>
-      <span class="by" id="appBy">매물 필터뷰 · eXp Korea</span>
+      <span class="by" id="appBy">매물 필터뷰</span>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <a class="map-icon-btn" href="https://www.google.com/maps/d/u/0/viewer?hl=ko&mid=1cRN6AKabH4M2gIDOzLU_kH2HsHhbNK0&ll=37.44840691226422%2C126.87623830097101&z=11" target="_blank" title="통합 매물 지도">
@@ -617,6 +617,7 @@ function render(){
         ${d.bdoc ? `<a class="doc-btn" href="${d.bdoc}" target="_blank">📄 건축물대장</a>` : ''}
         ${d.rdoc ? `<a class="doc-btn" href="${d.rdoc}" target="_blank">📋 등기부등본</a>` : ''}
         ${(d.addr||d.bldg) ? `<a class="doc-btn" href="https://map.naver.com/p/search/${encodeURIComponent(naverMapQuery(d))}" target="_blank">🗺️ 네이버지도</a>` : ''}
+        ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim())) ? `<a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련 명함</a>` : ''}
       </div>
     </div>`).join("");
   // 필터 뱃지
@@ -731,7 +732,7 @@ sortmenu.addEventListener("click",e=>{
 
 function applyMode(){
   const isClient = CONFIG.MODE==="client";
-  document.getElementById("appBy").textContent = CONFIG.TITLE || (isClient ? "추천 매물 · eXp Korea" : "매물 필터뷰 · eXp Korea");
+  document.getElementById("appBy").textContent = CONFIG.TITLE || (isClient ? "추천 매물 · eXp" : "매물 필터뷰 · eXp");
 }
 function loadLiveOnce(base, timeoutMs){
   return new Promise(function(resolve, reject){
@@ -806,6 +807,39 @@ function syncHeaderSpacer(){
 window.addEventListener("resize", syncHeaderSpacer);
 window.addEventListener("orientationchange", ()=>setTimeout(syncHeaderSpacer, 200));
 
+// ---- 명함 앱 연동: 실제로 연결된 매물번호만 파악해서 "관련 명함" 버튼 정확히 표시 ----
+const CARD_SCANNER_API = 'https://script.google.com/macros/s/AKfycbyFPY9gJxEJm_Ny-qqEViYWJ6l1cGptVLto7BR_jyLWk3A2KoV-shtR6ldKod1SdllB/exec';
+let CARD_PROPERTY_SET = new Set();
+
+function jsonpFetch(url, timeoutMs){
+  return new Promise(function(resolve, reject){
+    var cb = "__card_link_cb_" + Date.now() + "_" + Math.floor(Math.random()*100000);
+    var s = document.createElement("script");
+    var done = false;
+    window[cb] = function(data){ done=true; cleanup(); resolve(data); };
+    function cleanup(){ try{delete window[cb];}catch(e){window[cb]=undefined;} if(s.parentNode) s.parentNode.removeChild(s); }
+    s.onerror = function(){ if(!done){ cleanup(); reject(new Error("load fail")); } };
+    var sep = url.indexOf("?")>=0 ? "&" : "?";
+    s.src = url + sep + "callback=" + cb;
+    document.head.appendChild(s);
+    setTimeout(function(){ if(!done){ cleanup(); reject(new Error("timeout")); } }, timeoutMs||8000);
+  });
+}
+
+async function loadCardPropertyLinks(){
+  try{
+    const data = await jsonpFetch(CARD_SCANNER_API + '?action=list', 8000);
+    if(data && data.success && Array.isArray(data.cards)){
+      CARD_PROPERTY_SET = new Set(
+        data.cards.map(c => String(c.propertyNo || '').trim()).filter(Boolean)
+      );
+      render(); // 버튼 표시 여부가 바뀌므로 다시 그림
+    }
+  }catch(e){
+    // 실패해도 매물 목록 자체는 정상 작동해야 하므로 조용히 무시
+  }
+}
+
 async function boot(){
   applyMode();
   if(CONFIG.DATA_URL){
@@ -823,7 +857,24 @@ async function boot(){
   chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
   chipset("sidoOpts", uniq("sido"), state.sidos);
   rebuildSG();
+
+  // 명함 스캔 앱 등 외부에서 ?q=매물번호 형태로 넘어온 검색어 자동 반영
+  try{
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlQuery = urlParams.get("q");
+    if(urlQuery){
+      state.q = urlQuery.trim();
+      const qElInit = document.getElementById("q");
+      if(qElInit) qElInit.value = state.q;
+      const clrInit = document.getElementById("clr");
+      if(clrInit) clrInit.style.display = state.q ? "block" : "none";
+    }
+  }catch(e){}
+
   render();
+
+  // 명함 데이터는 매물 목록 표시를 막지 않도록 별도로(비차단) 불러옴
+  loadCardPropertyLinks();
 }
 /* ---- 비밀번호 잠금 (구글 시트 연동) ---- */
 (function(){
