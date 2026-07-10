@@ -620,7 +620,7 @@ function render(){
         ${d.rdoc ? `<a class="doc-btn" href="${d.rdoc}" target="_blank">📋 등기부등본</a>` : ''}
         ${(d.addr||d.bldg) ? `<a class="doc-btn" href="https://map.naver.com/p/search/${encodeURIComponent(naverMapQuery(d))}" target="_blank">🗺️ 네이버지도</a>` : ''}
       </div>
-      ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim())) ? `<div class="doc-btns card-link-row"><a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련명함집</a></div>` : ''}
+      ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim().toUpperCase())) ? `<div class="doc-btns card-link-row"><a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련명함집</a></div>` : ''}
     </div>`).join("");
   // 필터 뱃지
   let active = state.deals.size+state.sidos.size+state.sgs.size +
@@ -854,7 +854,7 @@ async function loadCardPropertyLinks(){
       const set = new Set();
       data.cards.forEach(c => {
         String(c.propertyNo || '').split(',').map(s => s.trim()).filter(Boolean)
-          .forEach(pn => set.add(pn));
+          .forEach(pn => set.add(pn.toUpperCase()));
       });
       CARD_PROPERTY_SET = set;
       try { localStorage.setItem(CARD_LINKS_CACHE_KEY, JSON.stringify(Array.from(set))); } catch (e) {}
