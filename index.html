@@ -38,17 +38,17 @@
   .map-icon-btn{
     display:inline-flex; align-items:center; justify-content:center;
     width:34px; height:34px; border-radius:9px;
-    background:var(--accent-soft); border:1px solid #D7DEFB;
-    color:var(--accent); cursor:pointer; text-decoration:none; flex:none;
+    background:transparent; border:none;
+    color:var(--muted); cursor:pointer; text-decoration:none; flex:none;
   }
-  .map-icon-btn:active{opacity:.8}
+  .map-icon-btn:active{opacity:.6}
   .cache-icon-btn{
     display:inline-flex; align-items:center; justify-content:center;
     width:34px; height:34px; border-radius:9px;
-    background:var(--accent-soft); border:1px solid #D7DEFB;
-    color:var(--accent); cursor:pointer; flex:none; padding:0;
+    background:transparent; border:none;
+    color:var(--muted); cursor:pointer; flex:none; padding:0;
   }
-  .cache-icon-btn:active{opacity:.8}
+  .cache-icon-btn:active{opacity:.6}
   .cache-icon-btn.spin svg{animation:cacheSpin .8s linear infinite}
   @keyframes cacheSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 
