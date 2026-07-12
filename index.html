@@ -206,13 +206,13 @@
   /* sort menu */
   .sortmenu{position:fixed; z-index:50; background:var(--surface); border:1px solid var(--line);
     border-radius:13px; box-shadow:0 12px 30px rgba(20,24,32,.16); overflow-y:auto; display:none;
-    min-width:160px; max-width:calc(100vw - 32px); max-height:60vh}
+    min-width:180px; max-width:calc(100vw - 32px); max-height:60vh; padding:6px}
   .sortmenu.on{display:block}
   .sortmenu button{display:flex; align-items:center; justify-content:space-between; width:100%;
-    background:0; border:0; padding:13px 15px; font-size:14px; font-weight:700; color:var(--ink);
+    background:0; border:0; border-radius:9px; padding:12px 12px; font-size:14.5px; font-weight:600; color:var(--ink);
     cursor:pointer; text-align:left; font-family:inherit}
-  .sortmenu button + button{border-top:1px solid var(--line-2)}
-  .sortmenu button.on{color:var(--accent)}
+  .sortmenu button:active{background:var(--bg);}
+  .sortmenu button.on{color:var(--accent); font-weight:700; background:#EEF3FF;}
 
   /* ---- 비밀번호 화면 ---- */
   #lockScreen{
@@ -736,7 +736,7 @@ document.getElementById("resetAll").addEventListener("click",()=>{
 
 /* ---- 정렬 메뉴 ---- */
 const sortmenu=document.getElementById("sortmenu");
-sortmenu.innerHTML=SORTS.map(s=>`<button data-k="${s.k}" class="${s.k===state.sort?'on':''}">${s.label}${s.k===state.sort?' ✓':''}</button>`).join("");
+sortmenu.innerHTML=SORTS.map(s=>`<button data-k="${s.k}" class="${s.k===state.sort?'on':''}"><span>${s.label}</span>${s.k===state.sort?'<span>✓</span>':''}</button>`).join("");
 function openSort(){
   const btn=document.getElementById("openSort").getBoundingClientRect();
   sortmenu.style.top=(btn.bottom+6)+"px";
@@ -751,7 +751,7 @@ sortmenu.addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b)return;
   state.sort=b.dataset.k;
   document.getElementById("sortLabel").textContent=SORTS.find(s=>s.k===state.sort).label;
-  sortmenu.innerHTML=SORTS.map(s=>`<button data-k="${s.k}" class="${s.k===state.sort?'on':''}">${s.label}${s.k===state.sort?' ✓':''}</button>`).join("");
+  sortmenu.innerHTML=SORTS.map(s=>`<button data-k="${s.k}" class="${s.k===state.sort?'on':''}"><span>${s.label}</span>${s.k===state.sort?'<span>✓</span>':''}</button>`).join("");
   closeSort();
   render();
 });
