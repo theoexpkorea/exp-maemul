@@ -37,20 +37,18 @@
 
   .map-icon-btn{
     display:inline-flex; align-items:center; justify-content:center;
-    width:34px; height:34px; border-radius:50%;
-    background:var(--surface); border:1px solid var(--line);
-    color:var(--muted); cursor:pointer; text-decoration:none; flex:none;
-    transition:background .15s, color .15s;
+    width:34px; height:34px; border-radius:9px;
+    background:var(--accent-soft); border:1px solid var(--accent);
+    color:var(--accent); cursor:pointer; text-decoration:none; flex:none;
   }
-  .map-icon-btn:active{background:var(--line-2); color:var(--accent);}
+  .map-icon-btn:active{opacity:.8}
   .cache-icon-btn{
     display:inline-flex; align-items:center; justify-content:center;
-    width:34px; height:34px; border-radius:50%;
-    background:var(--surface); border:1px solid var(--line);
-    color:var(--muted); cursor:pointer; flex:none; padding:0;
-    transition:background .15s, color .15s;
+    width:34px; height:34px; border-radius:9px;
+    background:var(--accent-soft); border:1px solid var(--accent);
+    color:var(--accent); cursor:pointer; flex:none; padding:0;
   }
-  .cache-icon-btn:active{background:var(--line-2); color:var(--accent);}
+  .cache-icon-btn:active{opacity:.8}
   .cache-icon-btn.spin svg{animation:cacheSpin .8s linear infinite}
   @keyframes cacheSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 
@@ -274,10 +272,10 @@
   <div class="lock-logo">the<span class="o">o</span></div>
   <div class="lock-sub">매물 필터뷰 · eXp Korea</div>
   <div class="lock-box">
-    <div class="lock-title"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:4px;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>비밀번호를 입력하세요</div>
-    <input id="lockInput" class="lock-input" type="password" name="pin-code-not-a-password"
+    <div class="lock-title">🔒 비밀번호를 입력하세요</div>
+    <input id="lockInput" class="lock-input" type="password"
       inputmode="numeric" maxlength="8" placeholder=""
-      autocomplete="off" data-lpignore="true" data-form-type="other" autocorrect="off" spellcheck="false">
+      autocomplete="new-password" autocorrect="off" spellcheck="false">
     <button class="lock-btn" id="lockBtn">확인</button>
     <div class="lock-err" id="lockErr"></div>
   </div>
@@ -291,12 +289,12 @@
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <a class="map-icon-btn" href="https://www.google.com/maps/d/u/0/viewer?hl=ko&mid=1cRN6AKabH4M2gIDOzLU_kH2HsHhbNK0&ll=37.44840691226422%2C126.87623830097101&z=11" target="_blank" title="통합 매물 지도">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/>
         </svg>
       </a>
       <button class="cache-icon-btn" id="cacheBtn" onclick="clearDocCache()" title="사진·서류 캐시 초기화">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/>
         </svg>
       </button>
@@ -621,8 +619,9 @@ function render(){
         ${d.bdoc ? `<a class="doc-btn" href="${d.bdoc}" target="_blank">📄 건축물대장</a>` : ''}
         ${d.rdoc ? `<a class="doc-btn" href="${d.rdoc}" target="_blank">📋 등기부등본</a>` : ''}
         ${(d.addr||d.bldg) ? `<a class="doc-btn" href="https://map.naver.com/p/search/${encodeURIComponent(naverMapQuery(d))}" target="_blank">🗺️ 네이버지도</a>` : ''}
+        <a class="doc-btn" href="https://www.eum.go.kr/web/am/amMain.jsp" target="_blank">🧭 토지e음웹</a>
       </div>
-      ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim().toUpperCase())) ? `<div class="doc-btns card-link-row"><a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련명함집</a></div>` : ''}
+      ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim())) ? `<div class="doc-btns card-link-row"><a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련명함집</a></div>` : ''}
     </div>`).join("");
   // 필터 뱃지
   let active = state.deals.size+state.sidos.size+state.sgs.size +
@@ -814,13 +813,8 @@ window.addEventListener("orientationchange", ()=>setTimeout(syncHeaderSpacer, 20
 // ---- 명함 앱 연동: 실제로 연결된 매물번호만 파악해서 "관련 명함" 버튼 정확히 표시 ----
 const CARD_SCANNER_API = 'https://script.google.com/macros/s/AKfycbyFPY9gJxEJm_Ny-qqEViYWJ6l1cGptVLto7BR_jyLWk3A2KoV-shtR6ldKod1SdllB/exec';
 let CARD_PROPERTY_SET = new Set();
-const CARD_LINKS_CACHE_KEY = "theo_card_links_cache";
-try {
-  const cachedLinks = localStorage.getItem(CARD_LINKS_CACHE_KEY);
-  if (cachedLinks) CARD_PROPERTY_SET = new Set(JSON.parse(cachedLinks));
-} catch (e) {}
 
-function jsonpFetchOnce(url, timeoutMs){
+function jsonpFetch(url, timeoutMs){
   return new Promise(function(resolve, reject){
     var cb = "__card_link_cb_" + Date.now() + "_" + Math.floor(Math.random()*100000);
     var s = document.createElement("script");
@@ -835,31 +829,16 @@ function jsonpFetchOnce(url, timeoutMs){
   });
 }
 
-// 명함스캔 서버(Apps Script) 예열 지연이나 모바일 네트워크 순간 끊김 대비: 실패 시 최대 3번 더 자동 재시도 (총 4회)
-function jsonpFetch(url, timeoutMs, retries, attempt){
-  timeoutMs = timeoutMs===undefined ? 12000 : timeoutMs;
-  retries = retries===undefined ? 3 : retries;
-  attempt = attempt===undefined ? 0 : attempt;
-  return jsonpFetchOnce(url, timeoutMs).catch(function(err){
-    if (retries<=0) throw err;
-    var wait = 700 * (attempt + 1);
-    return new Promise(function(resolve){ setTimeout(resolve, wait); }).then(function(){
-      return jsonpFetch(url, timeoutMs, retries-1, attempt+1);
-    });
-  });
-}
-
 async function loadCardPropertyLinks(){
   try{
-    const data = await jsonpFetch(CARD_SCANNER_API + '?action=list');
+    const data = await jsonpFetch(CARD_SCANNER_API + '?action=list', 8000);
     if(data && data.success && Array.isArray(data.cards)){
       const set = new Set();
       data.cards.forEach(c => {
         String(c.propertyNo || '').split(',').map(s => s.trim()).filter(Boolean)
-          .forEach(pn => set.add(pn.toUpperCase()));
+          .forEach(pn => set.add(pn));
       });
       CARD_PROPERTY_SET = set;
-      try { localStorage.setItem(CARD_LINKS_CACHE_KEY, JSON.stringify(Array.from(set))); } catch (e) {}
       render(); // 버튼 표시 여부가 바뀌므로 다시 그림
     }
   }catch(e){
@@ -869,6 +848,18 @@ async function loadCardPropertyLinks(){
 
 async function boot(){
   applyMode();
+  if(CONFIG.DATA_URL){
+    try{
+      const j = await loadLive(CONFIG.DATA_URL);
+      if(Array.isArray(j) && j.length){
+        DATA = j;   // 라이브 데이터로 교체
+        try{ localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(j)); }catch(e){}
+      }
+    }catch(e){
+      console.error("라이브 데이터 로드 실패 → 이전 데이터 유지:", e);
+      showStaleBanner();
+    }
+  }
   chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
   chipset("sidoOpts", uniq("sido"), state.sidos);
   rebuildSG();
@@ -886,26 +877,7 @@ async function boot(){
     }
   }catch(e){}
 
-  // 저장된(캐시) 데이터로 화면을 먼저 즉시 그려서 체감 로딩을 없앰
   render();
-
-  // 최신 데이터는 뒤에서 조용히 받아와 갱신
-  if(CONFIG.DATA_URL){
-    try{
-      const j = await loadLive(CONFIG.DATA_URL);
-      if(Array.isArray(j) && j.length){
-        DATA = j;   // 라이브 데이터로 교체
-        try{ localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(j)); }catch(e){}
-        chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
-        chipset("sidoOpts", uniq("sido"), state.sidos);
-        rebuildSG();
-        render();
-      }
-    }catch(e){
-      console.error("라이브 데이터 로드 실패 → 이전 데이터 유지:", e);
-      showStaleBanner();
-    }
-  }
 
   // 명함 데이터는 매물 목록 표시를 막지 않도록 별도로(비차단) 불러옴
   loadCardPropertyLinks();
