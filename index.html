@@ -472,6 +472,26 @@ function fnum(v,dec){ if(v==null||v==="-"||v===""||isNaN(+v)) return v; return (
 function naverMapQuery(d){
   return d.addr || d.bldg || "";
 }
+function copyAddressForEum(addr){
+  if(!addr) return;
+  try{
+    navigator.clipboard.writeText(addr).catch(()=>{});
+  }catch(e){}
+  showEumToast('주소 복사됨 · 토지이음 검색창에 붙여넣기(꾹 누르기)만 하면 돼요');
+}
+function showEumToast(msg){
+  let el = document.getElementById('eumToast');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'eumToast';
+    el.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#15181E;color:#fff;padding:11px 16px;border-radius:10px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:88vw;text-align:center;opacity:0;transition:opacity .2s;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.opacity = '0'; }, 2600);
+}
 function extrasLine(d){
   const bits=[];
   const isNA=v=>(v==null || v==="" || v==="-");
@@ -622,7 +642,7 @@ function render(){
         ${d.rdoc ? `<a class="doc-btn" href="${d.rdoc}" target="_blank">📋 등기부등본</a>` : ''}
         ${d.proposal ? `<a class="doc-btn" href="${d.proposal}" target="_blank"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> 매물제안서</a>` : ''}
         ${(d.addr||d.bldg) ? `<a class="doc-btn" href="https://map.naver.com/p/search/${encodeURIComponent(naverMapQuery(d))}" target="_blank">🗺️ 네이버지도</a>` : ''}
-        <a class="doc-btn" href="https://www.eum.go.kr/web/am/amMain.jsp" target="_blank">🏞️ 토지이음웹</a>
+        <a class="doc-btn" href="https://www.eum.go.kr/web/am/amMain.jsp" target="_blank" onclick="copyAddressForEum('${(d.addr||d.bldg||'').replace(/'/g,"\\'")}')">🏞️ 토지이음웹</a>
         ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim().toUpperCase())) ? `<a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련명함집</a>` : ''}
       </div>
     </div>`).join("");
