@@ -151,11 +151,11 @@
   .meta .v{font-size:13.5px; font-weight:800; letter-spacing:-.01em}
 
   /* 서류 버튼 */
-  .doc-btns{display:flex; gap:7px; margin-top:10px; clear:both}
+  .doc-btns{display:grid; grid-template-columns:repeat(3, 1fr); gap:7px; margin-top:10px; clear:both}
   .doc-btn{
-    display:inline-flex; align-items:center; gap:5px;
-    padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700;
-    line-height:1;
+    display:inline-flex; align-items:center; justify-content:center; gap:5px;
+    padding:6px 8px; border-radius:8px; font-size:12px; font-weight:700;
+    line-height:1.25; text-align:center;
     text-decoration:none; border:1.5px solid var(--line);
     color:var(--muted); background:var(--surface);
     transition:all .15s;
@@ -620,10 +620,11 @@ function render(){
       <div class="doc-btns">
         ${d.bdoc ? `<a class="doc-btn" href="${d.bdoc}" target="_blank">📄 건축물대장</a>` : ''}
         ${d.rdoc ? `<a class="doc-btn" href="${d.rdoc}" target="_blank">📋 등기부등본</a>` : ''}
+        ${d.proposal ? `<a class="doc-btn" href="${d.proposal}" target="_blank"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> 매물제안서</a>` : ''}
         ${(d.addr||d.bldg) ? `<a class="doc-btn" href="https://map.naver.com/p/search/${encodeURIComponent(naverMapQuery(d))}" target="_blank">🗺️ 네이버지도</a>` : ''}
         <a class="doc-btn" href="https://www.eum.go.kr/web/am/amMain.jsp" target="_blank">🏞️ 토지이음웹</a>
+        ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim().toUpperCase())) ? `<a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련명함집</a>` : ''}
       </div>
-      ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim().toUpperCase())) ? `<div class="doc-btns card-link-row"><a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련명함집</a></div>` : ''}
     </div>`).join("");
   // 필터 뱃지
   let active = state.deals.size+state.sidos.size+state.sgs.size +
