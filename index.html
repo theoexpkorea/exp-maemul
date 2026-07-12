@@ -149,11 +149,10 @@
   .meta .v{font-size:13.5px; font-weight:800; letter-spacing:-.01em}
 
   /* 서류 버튼 */
-  .doc-btns{display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; clear:both}
+  .doc-btns{display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; clear:both; max-width:380px}
   .doc-btn{
-    display:inline-flex; align-items:center; justify-content:center; gap:5px;
-    flex:0 0 calc((100% - 14px)/3); box-sizing:border-box;
-    padding:6px 8px; border-radius:8px; font-size:12px; font-weight:700;
+    display:inline-flex; align-items:center; gap:5px;
+    padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700;
     line-height:1;
     text-decoration:none; border:1.5px solid var(--line);
     color:var(--muted); background:var(--surface);
@@ -161,7 +160,6 @@
   }
   .doc-btn svg{display:block; flex-shrink:0;}
   .doc-btn:active{opacity:.75}
-  .card-link-row .doc-btn{flex:0 0 100%}
 
   .empty{text-align:center; padding:64px 24px; color:var(--muted)}
   .empty .em-t{font-size:15px; font-weight:700; color:var(--ink); margin-bottom:6px}
