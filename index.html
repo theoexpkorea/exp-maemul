@@ -38,14 +38,14 @@
   .map-icon-btn{
     display:inline-flex; align-items:center; justify-content:center;
     width:34px; height:34px; border-radius:9px;
-    background:var(--accent-soft); border:1px solid var(--accent);
+    background:var(--accent-soft); border:1px solid #D7DEFB;
     color:var(--accent); cursor:pointer; text-decoration:none; flex:none;
   }
   .map-icon-btn:active{opacity:.8}
   .cache-icon-btn{
     display:inline-flex; align-items:center; justify-content:center;
     width:34px; height:34px; border-radius:9px;
-    background:var(--accent-soft); border:1px solid var(--accent);
+    background:var(--accent-soft); border:1px solid #D7DEFB;
     color:var(--accent); cursor:pointer; flex:none; padding:0;
   }
   .cache-icon-btn:active{opacity:.8}
@@ -620,8 +620,8 @@ function render(){
         ${d.rdoc ? `<a class="doc-btn" href="${d.rdoc}" target="_blank">📋 등기부등본</a>` : ''}
         ${(d.addr||d.bldg) ? `<a class="doc-btn" href="https://map.naver.com/p/search/${encodeURIComponent(naverMapQuery(d))}" target="_blank">🗺️ 네이버지도</a>` : ''}
         <a class="doc-btn" href="https://www.eum.go.kr/web/am/amMain.jsp" target="_blank">🏞️ 토지e음웹</a>
+        ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim())) ? `<a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련명함집</a>` : ''}
       </div>
-      ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim())) ? `<div class="doc-btns card-link-row"><a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련명함집</a></div>` : ''}
     </div>`).join("");
   // 필터 뱃지
   let active = state.deals.size+state.sidos.size+state.sgs.size +
