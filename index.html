@@ -684,7 +684,9 @@ clr.addEventListener("click",()=>{qEl.value="";state.q="";clr.style.display="non
 /* ---- 옵션 빌드 ---- */
 function chipset(elId, values, set){
   const el=document.getElementById(elId);
-  el.innerHTML=values.map(v=>`<button class="opt" data-v="${v}">${v}</button>`).join("");
+  el.innerHTML=values.map(v=>`<button class="opt ${set.has(v)?'on':''}" data-v="${v}">${v}</button>`).join("");
+  if(el.dataset.bound) return; // 이벤트는 최초 1회만 연결 (중복 연결 시 클릭이 서로 상쇄되는 버그 방지)
+  el.dataset.bound = "1";
   el.addEventListener("click",e=>{
     const o=e.target.closest(".opt"); if(!o)return;
     const v=o.dataset.v;
