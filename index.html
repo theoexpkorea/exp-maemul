@@ -286,7 +286,7 @@
 <header>
   <div class="head-row">
     <div class="brand">
-      <span class="logo" onclick="event.preventDefault(); state.type='전체'; state.q=''; document.getElementById('q').value=''; applyChipStyles(); render();">the<span class="o">o</span></span>
+      <span class="logo" onclick="event.preventDefault(); state.type='전체'; state.q=''; document.getElementById('q').value=''; applyChipStyles(); resetDetailFilters(); resetSort(); render();">the<span class="o">o</span></span>
       <span class="by" id="appBy">매물 필터뷰 · eXp Korea</span>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
@@ -729,11 +729,15 @@ function pullInputs(){
   state.premMin=num(premMin.value); state.premMax=num(premMax.value);
 }
 document.getElementById("applyBtn").addEventListener("click",()=>{pullInputs(); render(); closeSheet();});
-document.getElementById("resetAll").addEventListener("click",()=>{
+function resetDetailFilters(){
   state.deals.clear(); state.sidos.clear(); state.sgs.clear();
   ["pyMin","pyMax","saleMin","saleMax","depMin","depMax","rentMin","rentMax","unitMin","unitMax","premMin","premMax"].forEach(k=>state[k]=null);
   document.querySelectorAll(".opt.on").forEach(o=>o.classList.remove("on"));
-  rebuildSG(); syncInputs(); render();
+  rebuildSG(); syncInputs();
+}
+document.getElementById("resetAll").addEventListener("click",()=>{
+  resetDetailFilters();
+  render(); closeSheet();
 });
 
 /* ---- 정렬 메뉴 ---- */
@@ -757,6 +761,11 @@ sortmenu.addEventListener("click",e=>{
   closeSort();
   render();
 });
+function resetSort(){
+  state.sort = SORTS[0].k;
+  document.getElementById("sortLabel").textContent = SORTS[0].label;
+  sortmenu.innerHTML=SORTS.map(s=>`<button data-k="${s.k}" class="${s.k===state.sort?'on':''}"><span>${s.label}</span>${s.k===state.sort?'<span>✓</span>':''}</button>`).join("");
+}
 
 function applyMode(){
   const isClient = CONFIG.MODE==="client";
