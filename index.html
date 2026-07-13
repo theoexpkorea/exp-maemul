@@ -616,8 +616,16 @@ function render(){
   const r = filtered();
   document.getElementById("cnt").textContent = r.length;
   const list = document.getElementById("list");
+
+  // 필터 뱃지 (결과가 0건이어도 항상 갱신되도록 빈 결과 처리보다 먼저 계산)
+  let active = state.deals.size+state.sidos.size+state.sgs.size +
+    [state.pyMin,state.pyMax,state.saleMin,state.saleMax,state.depMin,state.depMax,state.rentMin,state.rentMax,state.unitMin,state.unitMax,state.premMin,state.premMax].filter(x=>x!=null).length;
+  const b=document.getElementById("fbadge");
+  if(active){b.style.display="inline-flex"; b.textContent=active;} else b.style.display="none";
+
   if(!r.length){
     list.innerHTML = `<div class="empty"><div class="em-t">조건에 맞는 매물이 없어요</div><div class="em-s">필터를 조정하거나 초기화해 보세요</div></div>`;
+    syncHeaderSpacer();
     return;
   }
   list.innerHTML = r.map(d=>`
@@ -646,11 +654,6 @@ function render(){
         ${(d.id && CARD_PROPERTY_SET.has(String(d.id).trim().toUpperCase())) ? `<a class="doc-btn" href="https://theoexpkorea.github.io/card-scanner/?property=${encodeURIComponent(d.id)}" target="_blank">🪪 관련명함집</a>` : ''}
       </div>
     </div>`).join("");
-  // 필터 뱃지
-  let active = state.deals.size+state.sidos.size+state.sgs.size +
-    [state.pyMin,state.pyMax,state.saleMin,state.saleMax,state.depMin,state.depMax,state.rentMin,state.rentMax,state.unitMin,state.unitMax,state.premMin,state.premMax].filter(x=>x!=null).length;
-  const b=document.getElementById("fbadge");
-  if(active){b.style.display="inline-flex"; b.textContent=active;} else b.style.display="none";
   syncHeaderSpacer();
 }
 
