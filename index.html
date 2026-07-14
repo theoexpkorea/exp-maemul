@@ -625,7 +625,7 @@ function render(){
   if(active){b.style.display="inline-flex"; b.textContent=active;} else b.style.display="none";
 
   if(!r.length){
-    list.innerHTML = `<div class="empty"><div class="em-t">조건에 맞는 매물이 없어요</div><div class="em-s">필터를 조정하거나 초기화해 보세요</div></div>`;
+    list.innerHTML = `<div class="empty"><div class="em-t">조건에 맞는 매물이 없어요.</div><div class="em-s">필터를 조정하거나 초기화해 보세요.</div></div>`;
     syncHeaderSpacer();
     return;
   }
@@ -818,7 +818,7 @@ function showStaleBanner(){
         render();
       }
     }catch(e){
-      b.textContent = "⚠️ 다시 실패했습니다. 잠시 후 다시 탭해 주세요";
+      b.textContent = "⚠️ 다시 실패했습니다. 잠시 후 다시 탭해 주세요.";
     }
   };
   document.body.insertBefore(b, document.body.firstChild);
@@ -975,7 +975,7 @@ async function boot(){
 
   function tryUnlock(){
     const entered = lockInput.value.trim();
-    if(!entered){ lockErr.textContent = "비밀번호를 입력해 주세요"; return; }
+    if(!entered){ lockErr.textContent = "비밀번호를 입력해 주세요."; return; }
     if(!passLoaded){
       if(!passLoading){
         lockErr.textContent = "서버에 연결하는 중...";
@@ -986,7 +986,7 @@ async function boot(){
     if(entered === correctPass){
       unlock();
     } else {
-      lockErr.textContent = "비밀번호가 틀렸습니다";
+      lockErr.textContent = "비밀번호가 틀렸습니다.";
       lockInput.value = "";
       lockInput.focus();
       lockInput.style.borderColor = "#E03A3A";
@@ -1040,7 +1040,7 @@ async function boot(){
       try{
         data = await loadPassOnce(passUrl, 15000);
       }catch(e){
-        if(!hadCache) lockErr.textContent = "연결 중... 다시 시도합니다";
+        if(!hadCache) lockErr.textContent = "연결 중... 다시 시도합니다.";
         await new Promise(r=>setTimeout(r, 800));
         data = await loadPassOnce(passUrl, 15000);
       }
@@ -1052,7 +1052,7 @@ async function boot(){
       }
     }catch(e){
       // 캐시된 비번으로 이미 언락 가능한 상태면 에러를 굳이 보여주지 않음
-      if(!hadCache) lockErr.textContent = "서버 연결이 원활하지 않습니다. 확인 버튼을 다시 눌러주세요";
+      if(!hadCache) lockErr.textContent = "서버 연결이 원활하지 않습니다. 확인 버튼을 다시 눌러주세요.";
     }finally{
       passLoading = false;
     }
