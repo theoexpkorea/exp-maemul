@@ -346,6 +346,10 @@
       <div class="opts" id="statusOpts"></div>
     </div>
     <div class="fgroup">
+      <div class="ft">매물구분</div>
+      <div class="opts" id="ownOpts"></div>
+    </div>
+    <div class="fgroup">
       <div class="ft">거래구분</div>
       <div class="opts" id="dealOpts"></div>
     </div>
@@ -458,7 +462,7 @@ const SORTS = [
 ];
 
 const state = {
-  q:"", type:"전체", deals:new Set(), sidos:new Set(), sgs:new Set(), statuses:new Set(),
+  q:"", type:"전체", deals:new Set(), sidos:new Set(), sgs:new Set(), statuses:new Set(), owns:new Set(),
   pyMin:null,pyMax:null, saleMin:null,saleMax:null, depMin:null,depMax:null, rentMin:null,rentMax:null, unitMin:null,unitMax:null, premMin:null,premMax:null,
   sort:"id_asc"
 };
@@ -565,6 +569,7 @@ function ownClass(o){
   return "own-other";   // 타부동산 등
 }
 const STATUSES = ["거래가능","협의중","타부동산계약","자기계약","거래중단"];
+const OWNS = ["자기매물","공동중개","타부동산"];
 function statusClass(s){
   if(s==="거래가능") return "status-avail";
   if(s==="협의중") return "status-nego";
@@ -579,6 +584,7 @@ function filtered(){
   let r = DATA.filter(d=>{
     if(state.type!=="전체" && d.type!==state.type) return false;
     if(state.statuses.size && !state.statuses.has(d.status)) return false;
+    if(state.owns.size && !state.owns.has(d.own)) return false;
     if(state.deals.size && !state.deals.has(d.deal)) return false;
     if(state.sidos.size && !state.sidos.has(d.sido)) return false;
     if(state.sgs.size && !state.sgs.has(d.sigungu)) return false;
@@ -640,7 +646,7 @@ function render(){
   const list = document.getElementById("list");
 
   // 필터 뱃지 (결과가 0건이어도 항상 갱신되도록 빈 결과 처리보다 먼저 계산)
-  let active = state.deals.size+state.sidos.size+state.sgs.size+state.statuses.size +
+  let active = state.deals.size+state.sidos.size+state.sgs.size+state.statuses.size+state.owns.size +
     [state.pyMin,state.pyMax,state.saleMin,state.saleMax,state.depMin,state.depMax,state.rentMin,state.rentMax,state.unitMin,state.unitMax,state.premMin,state.premMax].filter(x=>x!=null).length;
   const b=document.getElementById("fbadge");
   if(active){b.style.display="inline-flex"; b.textContent=active;} else b.style.display="none";
@@ -755,7 +761,7 @@ function pullInputs(){
 }
 document.getElementById("applyBtn").addEventListener("click",()=>{pullInputs(); render(); closeSheet();});
 function resetDetailFilters(){
-  state.deals.clear(); state.sidos.clear(); state.sgs.clear(); state.statuses.clear();
+  state.deals.clear(); state.sidos.clear(); state.sgs.clear(); state.statuses.clear(); state.owns.clear();
   ["pyMin","pyMax","saleMin","saleMax","depMin","depMax","rentMin","rentMax","unitMin","unitMax","premMin","premMax"].forEach(k=>state[k]=null);
   document.querySelectorAll(".opt.on").forEach(o=>o.classList.remove("on"));
   rebuildSG(); syncInputs();
@@ -928,6 +934,7 @@ async function loadCardPropertyLinks(){
 async function boot(){
   applyMode();
   chipset("statusOpts", STATUSES, state.statuses);
+  chipset("ownOpts", OWNS, state.owns);
   chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
   chipset("sidoOpts", uniq("sido"), state.sidos);
   rebuildSG();
@@ -956,6 +963,7 @@ async function boot(){
         DATA = j;   // 라이브 데이터로 교체
         try{ localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(j)); }catch(e){}
         chipset("statusOpts", STATUSES, state.statuses);
+        chipset("ownOpts", OWNS, state.owns);
         chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
         chipset("sidoOpts", uniq("sido"), state.sidos);
         rebuildSG();
