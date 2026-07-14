@@ -130,6 +130,13 @@
   .own.own-joint{background:var(--accent); color:#fff; border-color:var(--accent)}
   .own.own-other{background:#fff; color:var(--muted); border-color:var(--line)}
 
+  .status{font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; border:1px solid transparent}
+  .status.status-avail{background:#E7F4ED; color:#1F7A4D; border-color:#CBEAD9}
+  .status.status-nego{background:#FBF1E2; color:#9A5B14; border-color:#F5DFB8}
+  .status.status-otherdeal{background:#F0F1F4; color:#3B414C; border-color:#E2E4E9}
+  .status.status-selfdeal{background:#EEF1FE; color:#2746E6; border-color:#D7DEFB}
+  .status.status-stopped{background:#FBEAEA; color:#C23A3A; border-color:#F3CFCF}
+
   .thumb{float:right; width:84px; height:84px; border-radius:9px; overflow:hidden; margin:0 0 8px 12px; background:#EEF0F3}
   .thumb img{width:100%; height:100%; object-fit:cover; display:block}
   .bldg{font-size:16.5px; font-weight:800; letter-spacing:-.02em; line-height:1.3; margin:0 0 3px;
@@ -335,6 +342,10 @@
   </div>
   <div class="sheet-body">
     <div class="fgroup">
+      <div class="ft">계약관리</div>
+      <div class="opts" id="statusOpts"></div>
+    </div>
+    <div class="fgroup">
       <div class="ft">거래구분</div>
       <div class="opts" id="dealOpts"></div>
     </div>
@@ -447,7 +458,7 @@ const SORTS = [
 ];
 
 const state = {
-  q:"", type:"전체", deals:new Set(), sidos:new Set(), sgs:new Set(),
+  q:"", type:"전체", deals:new Set(), sidos:new Set(), sgs:new Set(), statuses:new Set(),
   pyMin:null,pyMax:null, saleMin:null,saleMax:null, depMin:null,depMax:null, rentMin:null,rentMax:null, unitMin:null,unitMax:null, premMin:null,premMax:null,
   sort:"id_asc"
 };
@@ -553,11 +564,21 @@ function ownClass(o){
   if(o==="공동중개") return "own-joint";
   return "own-other";   // 타부동산 등
 }
+const STATUSES = ["거래가능","협의중","타부동산계약","자기계약","거래중단"];
+function statusClass(s){
+  if(s==="거래가능") return "status-avail";
+  if(s==="협의중") return "status-nego";
+  if(s==="타부동산계약") return "status-otherdeal";
+  if(s==="자기계약") return "status-selfdeal";
+  if(s==="거래중단") return "status-stopped";
+  return "status-otherdeal";
+}
 
 /* ---- 필터 적용 ---- */
 function filtered(){
   let r = DATA.filter(d=>{
     if(state.type!=="전체" && d.type!==state.type) return false;
+    if(state.statuses.size && !state.statuses.has(d.status)) return false;
     if(state.deals.size && !state.deals.has(d.deal)) return false;
     if(state.sidos.size && !state.sidos.has(d.sido)) return false;
     if(state.sgs.size && !state.sgs.has(d.sigungu)) return false;
@@ -619,7 +640,7 @@ function render(){
   const list = document.getElementById("list");
 
   // 필터 뱃지 (결과가 0건이어도 항상 갱신되도록 빈 결과 처리보다 먼저 계산)
-  let active = state.deals.size+state.sidos.size+state.sgs.size +
+  let active = state.deals.size+state.sidos.size+state.sgs.size+state.statuses.size +
     [state.pyMin,state.pyMax,state.saleMin,state.saleMax,state.depMin,state.depMax,state.rentMin,state.rentMax,state.unitMin,state.unitMax,state.premMin,state.premMax].filter(x=>x!=null).length;
   const b=document.getElementById("fbadge");
   if(active){b.style.display="inline-flex"; b.textContent=active;} else b.style.display="none";
@@ -634,7 +655,7 @@ function render(){
       <div class="card-top">
         <span class="tag t-type" style="${typeStyle(d.type)}">${d.type}</span>
         <span class="tag t-deal ${d.deal}">${d.deal}</span>
-        ${isClient ? '' : `<span class="own ${ownClass(d.own)}">${d.own}</span><span class="idbox"><span class="id">${d.id}</span>${naverLine(d)}</span>`}
+        ${isClient ? '' : `<span class="status ${statusClass(d.status)}">${d.status}</span><span class="own ${ownClass(d.own)}">${d.own}</span><span class="idbox"><span class="id">${d.id}</span>${naverLine(d)}</span>`}
       </div>
       ${d.photo ? `<div class="thumb"><img src="${d.photo}" loading="lazy" referrerpolicy="no-referrer" alt="" onerror="this.parentNode.style.display='none'"></div>` : ""}
       <div class="bldg">${d.bldg}</div>
@@ -734,7 +755,7 @@ function pullInputs(){
 }
 document.getElementById("applyBtn").addEventListener("click",()=>{pullInputs(); render(); closeSheet();});
 function resetDetailFilters(){
-  state.deals.clear(); state.sidos.clear(); state.sgs.clear();
+  state.deals.clear(); state.sidos.clear(); state.sgs.clear(); state.statuses.clear();
   ["pyMin","pyMax","saleMin","saleMax","depMin","depMax","rentMin","rentMax","unitMin","unitMax","premMin","premMax"].forEach(k=>state[k]=null);
   document.querySelectorAll(".opt.on").forEach(o=>o.classList.remove("on"));
   rebuildSG(); syncInputs();
@@ -906,6 +927,7 @@ async function loadCardPropertyLinks(){
 
 async function boot(){
   applyMode();
+  chipset("statusOpts", STATUSES, state.statuses);
   chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
   chipset("sidoOpts", uniq("sido"), state.sidos);
   rebuildSG();
@@ -933,6 +955,7 @@ async function boot(){
       if(Array.isArray(j) && j.length){
         DATA = j;   // 라이브 데이터로 교체
         try{ localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(j)); }catch(e){}
+        chipset("statusOpts", STATUSES, state.statuses);
         chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
         chipset("sidoOpts", uniq("sido"), state.sidos);
         rebuildSG();
