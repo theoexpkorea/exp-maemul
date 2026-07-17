@@ -519,11 +519,17 @@ function showEumToast(msg){
 function extrasLine(d){
   const bits=[];
   const isNA=v=>(v==null || v==="" || v==="-");
+  const escT=v=>String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   // 권리금/관리비: 0이면 "없음", 빈칸이면 숨김
   const cell=(label,v)=>{
     if(isNA(v)) return null;
     const n=Number(v); if(isNaN(n)) return null;
     return `<span class="ex"><span class="ek">${label}</span>${n>0?won(v):"없음"}</span>`;
+  };
+  // 텍스트 값(입주가능일 등): 값 있으면 그대로 표시
+  const txt=(label,v)=>{
+    if(isNA(v)) return null;
+    return `<span class="ex"><span class="ek">${label}</span>${escT(v)}</span>`;
   };
   // 보증/월세: 값이 0보다 클 때만 (매매 부가용)
   const pos=(label,v)=>{
@@ -538,6 +544,7 @@ function extrasLine(d){
   }
   const p=cell("권리금",d.premium); if(p) bits.push(p);
   const m=cell("관리비",d.mgmt);    if(m) bits.push(m);
+  const mv=txt("입주가능",d.movein); if(mv) bits.push(mv);
   return bits.length ? `<div class="extras tnum">${bits.join("")}</div>` : "";
 }
 const num = v => (v===""||v==null)?null:(isNaN(+v)?null:+v);
