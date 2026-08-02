@@ -132,6 +132,7 @@
   .idbox .nv:hover{color:#2746E6}
   .idbox .nv:hover b{color:#2746E6}
   .idbox .nv b{font-weight:700; color:#8b919b}
+  .idbox .ad-badge{display:block; width:fit-content; margin:3px 0 0 auto; font-size:9.5px; font-weight:700; color:#fff; background:#E5484D; padding:2px 6px; border-radius:5px; letter-spacing:-.2px}
   .own{font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; border:1px solid transparent}
   .own.own-self{background:var(--ink); color:#fff; border-color:var(--ink)}
   .own.own-joint{background:var(--accent); color:#fff; border-color:var(--accent)}
@@ -554,6 +555,16 @@ function naverLine(d){
   const url=`https://m.land.naver.com/article/info/${encodeURIComponent(v)}`;
   return `<a class="nv" href="${url}" target="_blank" onclick="event.stopPropagation()">네이버 <b>${v}</b></a>`;
 }
+function adBadge(d){
+  const v=d.adDate;
+  if(v==null || v==="" || String(v).trim()==="-") return "";
+  const dt=new Date(v);
+  if(isNaN(dt.getTime())) return "";
+  const diffDays=Math.floor((new Date()-dt)/86400000);
+  if(diffDays<30) return "";
+  const safe=String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  return `<span class="ad-badge" title="광고일: ${safe}">재등록필요</span>`;
+}
 
 /* ---- 매물종류 색상 (상업=블루계열 / 주거=그린계열 / 토지·특수=앰버·퍼플계열) ---- */
 const TYPE_COLOR = {
@@ -676,7 +687,7 @@ function render(){
       <div class="card-top">
         <span class="tag t-type" style="${typeStyle(d.type)}">${d.type}</span>
         <span class="tag t-deal ${d.deal}">${d.deal}</span>
-        ${isClient ? '' : `<span class="status ${statusClass(d.status)}">${d.status}</span><span class="own ${ownClass(d.own)}">${d.own}</span><span class="idbox"><span class="id">${d.id}</span>${naverLine(d)}</span>`}
+        ${isClient ? '' : `<span class="status ${statusClass(d.status)}">${d.status}</span><span class="own ${ownClass(d.own)}">${d.own}</span><span class="idbox"><span class="id">${d.id}</span>${naverLine(d)}${adBadge(d)}</span>`}
       </div>
       ${d.photo ? `<div class="thumb"><img src="${d.photo}" loading="lazy" referrerpolicy="no-referrer" alt="" onerror="this.parentNode.style.display='none'"></div>` : ""}
       <div class="bldg">${d.bldg}</div>
