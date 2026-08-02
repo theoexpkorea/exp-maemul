@@ -363,6 +363,10 @@
       <div class="opts" id="dealOpts"></div>
     </div>
     <div class="fgroup">
+      <div class="ft">광고</div>
+      <div class="opts" id="adOpts"></div>
+    </div>
+    <div class="fgroup">
       <div class="ft">시도</div>
       <div class="opts" id="sidoOpts"></div>
     </div>
@@ -471,7 +475,7 @@ const SORTS = [
 ];
 
 const state = {
-  q:"", type:"전체", deals:new Set(), sidos:new Set(), sgs:new Set(), statuses:new Set(), owns:new Set(),
+  q:"", type:"전체", deals:new Set(), sidos:new Set(), sgs:new Set(), statuses:new Set(), owns:new Set(), adFilter:new Set(),
   pyMin:null,pyMax:null, saleMin:null,saleMax:null, depMin:null,depMax:null, rentMin:null,rentMax:null, unitMin:null,unitMax:null, premMin:null,premMax:null,
   sort:"id_asc"
 };
@@ -555,14 +559,17 @@ function naverLine(d){
   const url=`https://m.land.naver.com/article/info/${encodeURIComponent(v)}`;
   return `<a class="nv" href="${url}" target="_blank" onclick="event.stopPropagation()">네이버 <b>${v}</b></a>`;
 }
-function adBadge(d){
+function isAdOverdue(d){
   const v=d.adDate;
-  if(v==null || v==="" || String(v).trim()==="-") return "";
+  if(v==null || v==="" || String(v).trim()==="-") return false;
   const dt=new Date(v);
-  if(isNaN(dt.getTime())) return "";
+  if(isNaN(dt.getTime())) return false;
   const diffDays=Math.floor((new Date()-dt)/86400000);
-  if(diffDays<30) return "";
-  const safe=String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  return diffDays>=30;
+}
+function adBadge(d){
+  if(!isAdOverdue(d)) return "";
+  const safe=String(d.adDate).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   return `<span class="ad-badge" title="광고일: ${safe}">재등록필요</span>`;
 }
 
@@ -612,6 +619,7 @@ function filtered(){
     if(state.statuses.size && !state.statuses.has(d.status)) return false;
     if(state.owns.size && !state.owns.has(d.own)) return false;
     if(state.deals.size && !state.deals.has(d.deal)) return false;
+    if(state.adFilter.size && !isAdOverdue(d)) return false;
     if(state.sidos.size && !state.sidos.has(d.sido)) return false;
     if(state.sgs.size && !state.sgs.has(d.sigungu)) return false;
     if(state.pyMin!=null && d.pyeong<state.pyMin) return false;
@@ -672,7 +680,7 @@ function render(){
   const list = document.getElementById("list");
 
   // 필터 뱃지 (결과가 0건이어도 항상 갱신되도록 빈 결과 처리보다 먼저 계산)
-  let active = state.deals.size+state.sidos.size+state.sgs.size+state.statuses.size+state.owns.size +
+  let active = state.deals.size+state.sidos.size+state.sgs.size+state.statuses.size+state.owns.size+state.adFilter.size +
     [state.pyMin,state.pyMax,state.saleMin,state.saleMax,state.depMin,state.depMax,state.rentMin,state.rentMax,state.unitMin,state.unitMax,state.premMin,state.premMax].filter(x=>x!=null).length;
   const b=document.getElementById("fbadge");
   if(active){b.style.display="inline-flex"; b.textContent=active;} else b.style.display="none";
@@ -789,7 +797,7 @@ function pullInputs(){
 }
 document.getElementById("applyBtn").addEventListener("click",()=>{pullInputs(); render(); closeSheet();});
 function resetDetailFilters(){
-  state.deals.clear(); state.sidos.clear(); state.sgs.clear(); state.statuses.clear(); state.owns.clear();
+  state.deals.clear(); state.sidos.clear(); state.sgs.clear(); state.statuses.clear(); state.owns.clear(); state.adFilter.clear();
   ["pyMin","pyMax","saleMin","saleMax","depMin","depMax","rentMin","rentMax","unitMin","unitMax","premMin","premMax"].forEach(k=>state[k]=null);
   document.querySelectorAll(".opt.on").forEach(o=>o.classList.remove("on"));
   rebuildSG(); syncInputs();
@@ -964,6 +972,7 @@ async function boot(){
   chipset("statusOpts", STATUSES, state.statuses);
   chipset("ownOpts", OWNS, state.owns);
   chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
+  chipset("adOpts", ["재등록필요"], state.adFilter);
   chipset("sidoOpts", uniq("sido"), state.sidos);
   rebuildSG();
 
@@ -993,6 +1002,7 @@ async function boot(){
         chipset("statusOpts", STATUSES, state.statuses);
         chipset("ownOpts", OWNS, state.owns);
         chipset("dealOpts", ["매매","전세","월세","단기임대"], state.deals);
+  chipset("adOpts", ["재등록필요"], state.adFilter);
         chipset("sidoOpts", uniq("sido"), state.sidos);
         rebuildSG();
         render();
